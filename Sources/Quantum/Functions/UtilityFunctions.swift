@@ -120,5 +120,32 @@ public func getRowLimits(dim: Int, diagIdx: Int) -> (Int, Int) {
     
 }
 
+
+public func convertIntToBasisState(intToConvert n: Int, basisStateDimensions b: [Int]) -> [Int] {
+    /*
+     Function to be used in partial trace algorithm. When tracing out an arbitrary number of spaces, each with arbitrary dimension hilbert space,
+     it is imperitive to ensure all possible combinations of basis states being traced out are accounted for, and that the correct indices are used.
+     
+     A set of spaces {H_i} will have total dimension d = 𝛱_i(dim(H_i)), hence d basis states to trace out.
+     
+     This function takes any n ∈ [0,d-1] and returns the basis state index for each subspace. Adapted from the algorithm for decimal to binary conversion at
+     
+     https://www.geeksforgeeks.org/python-decimal-to-binary-list-conversion/
+     
+     Specifically, "Method 3: Using While"
+     */
+    var n_copy = n
+    var i = b.count-1
+    var output = [Int](repeating: 0, count: b.count)
+    
+    while n_copy > 0 {
+        output[i] = n_copy % b[i]
+        n_copy /= b[i]
+        i -= 1
+    }
+    
+    return output
+}
+
 //  Created by M J Everitt on 17/01/2022.
 

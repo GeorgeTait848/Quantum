@@ -315,23 +315,6 @@ final class CoreTests: XCTestCase {
         
         let testDiagMMSpace = VectorSpace<Double>(dimension: 4, label: "")
         
-        /*
-         A = 1 0 0 0
-             2 3 0 0
-             0 4 5 0
-             0 0 6 7 , diagonals are 0,-1
-         
-         B = 0 1 0 0
-             1 0 1 0
-             0 1 0 1
-             0 0 1 0 , diagonals are 1,-1
-         
-         C = A*B
-           = 0 1 0 0
-             3 2 3 0
-             4 5 4 5
-             0 6 7 6 , should have diagonals -1,-2,0,1.
-         */
         let A = DiagonalSparseMatrix(in: testDiagMMSpace, diagonals:
                                         [0: MatrixDiagonal(dimension: 4, diagIdx: 0, elements: [0:1, 1:3, 2:5, 3:7]),
                                          -1: MatrixDiagonal(dimension: 4, diagIdx: -1, elements: [1: 2, 2:4, 3: 6])])
@@ -412,6 +395,42 @@ final class CoreTests: XCTestCase {
     }
     
     
+    func testConvertIntToBasisState() throws {
+        
+        /*
+         Case 1: First subsystem of dimension 3, second of dimension 2
+         Testing all 6 integers possible
+         */
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 0, basisStateDimensions: [3,2]), [0,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 1, basisStateDimensions: [3,2]), [0,1])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 2, basisStateDimensions: [3,2]), [1,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 3, basisStateDimensions: [3,2]), [1,1])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 4, basisStateDimensions: [3,2]), [2,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 5, basisStateDimensions: [3,2]), [2,1])
+        
+        
+        /*
+         Case 2: 3 subsystems, first of dimension 2, second of dim 3, third of dim 4
+         Testing for numbers 0,2,4,6,8,10,12,14,16, 19, 23
+         */
+        
+        
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 0, basisStateDimensions: [2,3,4]), [0,0,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 2, basisStateDimensions: [2,3,4]), [0,0,2])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 4, basisStateDimensions: [2,3,4]), [0,1,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 6, basisStateDimensions: [2,3,4]), [0,1,2])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 8, basisStateDimensions: [2,3,4]), [0,2,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 10, basisStateDimensions: [2,3,4]), [0,2,2])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 12, basisStateDimensions: [2,3,4]), [1,0,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 14, basisStateDimensions: [2,3,4]), [1,0,2])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 16, basisStateDimensions: [2,3,4]), [1,1,0])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 19, basisStateDimensions: [2,3,4]), [1,1,3])
+        XCTAssertEqual(convertIntToBasisState(intToConvert: 23, basisStateDimensions: [2,3,4]), [1,2,3])
+        
+        
+        
+    }
+   
     
     
     
@@ -433,7 +452,7 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(slope2, 0.5)
         XCTAssertEqual(intercept2, 1)
     }
-   
+
     
 }
 

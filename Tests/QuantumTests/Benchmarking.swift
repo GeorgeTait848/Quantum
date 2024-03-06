@@ -23,7 +23,7 @@ final class Benchmarking: XCTestCase {
         let matMult: (_ A: Matrix<Double>, _ B: Matrix<Double>) -> Matrix<Double> = {A,B in return A * B}
         
         let dims = [32,64,100,200,400]
-        let (omega, r_sq) = estimateTimeComplexity(dims: dims, operation: matMult)
+        let (omega, r_sq, _, _) = estimateTimeComplexity(dims: dims, operation: matMult)
     
         storeElapsedTimeDataToFile(dims: dims, operation: matMult, filename: "matMult.dat")
         

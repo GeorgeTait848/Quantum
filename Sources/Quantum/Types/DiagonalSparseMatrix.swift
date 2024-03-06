@@ -218,8 +218,6 @@ public struct MatrixDiagonal<T: Scalar> {
     public typealias ScalarField = T
     var dimension: Int
     var diagIdx: Int
-    var rowLowerLim: Int
-    var rowUpperLim: Int
     var elements: [Int: T]
     
     
@@ -230,20 +228,10 @@ public struct MatrixDiagonal<T: Scalar> {
         self.dimension = dimension
         
         if diagIdx <= -dimension || diagIdx >= dimension {
-            self.rowLowerLim = 0
-            self.rowUpperLim = 0
             self.elements = [:]
             return
         }
-        if diagIdx <= 0 {
-            self.rowLowerLim = -diagIdx
-            self.rowUpperLim = dimension-1
-            
-            return
-        }
         
-        self.rowLowerLim = 0
-        self.rowUpperLim = dimension-diagIdx-1
     }
     
     public subscript (row: Int) -> T? {
@@ -259,16 +247,16 @@ public struct MatrixDiagonal<T: Scalar> {
         }
         
         set {
+            
+            let (rowLowerLim, rowUpperLim) = getRowLimits(dim: self.dimension, diagIdx: self.diagIdx)
             assert(row >= rowLowerLim && row <= rowUpperLim)
             self.elements[row] = newValue
         }
     }
     
       public static func += (lhs: inout MatrixDiagonal, rhs: MatrixDiagonal) {
-        
-        //assume lhs.diagIdx = rhs.DiagIdx.
-        //want to change this to use += as a mutating operator
-        
+          assert(lhs.diagIdx == rhs.diagIdx, "cannot add matrix diagonals of different diagonal indices")
+          
         for (row,val) in rhs.elements {
             
             
@@ -304,7 +292,7 @@ public struct MatrixDiagonal<T: Scalar> {
     }
     
     public static func - (lhs: MatrixDiagonal,rhs: MatrixDiagonal) -> MatrixDiagonal {
-        
+        assert(lhs.diagIdx == rhs.diagIdx, "Cannot subtract matrix diagonals of different diagonal indices.")
     var output = lhs
     
     for (row,rhsVal) in rhs.elements {
@@ -368,11 +356,12 @@ public struct MatrixDiagonal<T: Scalar> {
         
         var output = MatrixDiagonal(dimension: outputDim, diagIdx: outputDiagIdx, elements: [:])
         
+        let (rowLowerLim, rowUpperLim) = getRowLimits(dim: outputDim, diagIdx: outputDiagIdx)
         var rowBlockIdx: Int
         var colBlockIdx: Int
         var rowInSelf: Int
         
-        for row in output.rowLowerLim...output.rowUpperLim {
+        for row in rowLowerLim...rowUpperLim {
             
             rowBlockIdx = row/dim
             colBlockIdx = (row + outputDiagIdx)/dim
@@ -397,7 +386,7 @@ public struct MatrixDiagonal<T: Scalar> {
         var output = MatrixDiagonal(dimension: outputDim, diagIdx: outputDiagIdx, elements: [:])
         
         
-        let (rowBlockLowerLim, rowBlockUpperLim) = getRowLimits(dim: self.dimension, diagIdx: diagIdx)
+        let (rowBlockLowerLim, rowBlockUpperLim) = getRowLimits(dim: dimension, diagIdx: diagIdx)
         
         for rowBlock in rowBlockLowerLim...rowBlockUpperLim {
             

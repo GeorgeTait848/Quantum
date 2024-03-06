@@ -1,25 +1,86 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by George Tait on 05/10/2023.
 //
 
 import Foundation
 
+public func benchmarkDiagonalSparseMatMult(dims: [Int], writeDataToFileAt: String) {
+    
+    let diagonalSparseMM: (DiagonalSparseMatrix<ComplexReal>, DiagonalSparseMatrix<ComplexReal>) -> DiagonalSparseMatrix<ComplexReal>  =  {A,B in A*B}
+    let lc = 50
+    
+    var lowDensities = [Double](repeating: 0.0, count: lc)
+    
+    for i in 0..<lowDensities.count {
+        lowDensities[i] += 0.1*Double(i)/Double(lc)
+    }
+    
+    
+    let hc = 18
+    var highDensities = [Double](repeating: 0.0, count: hc)
+    
+    
+    for i in 0..<hc {
+        highDensities[i] += 0.1 + 0.9*Double(i)/Double(hc)
+    }
+    
+    let densities = lowDensities + highDensities
+}
 
 
-public func estimateTimeComplexity<T:VectorType>(dims: [Int], operation: (T,T) -> T) -> (Double, Double) {
+public func makeMatrixByDiagonalDensity(in space: VectorSpace<ComplexReal>, densityOfDiagonals: Double) -> DiagonalSparseMatrix<ComplexReal> {
+    
+    var output = DiagonalSparseMatrix(in: space)
+    
+    let numDiags = Int(Double(2*space.dimension-1)*densityOfDiagonals)
+    
+    var n = 0; var currDiagIdx = 0
+    
+    while n < numDiags {
+        let (rowLowerLim, rowUpperLim) = getRowLimits(dim: space.dimension, diagIdx: currDiagIdx)
+        var elem: [Int:ComplexReal] = [:]
+        
+        for row in rowLowerLim...rowUpperLim {
+            elem[row] = ComplexReal(real: 1, imag: 0)
+        }
+        
+        let curr = MatrixDiagonal(dimension: space.dimension, diagIdx: currDiagIdx, elements: elem)
+        output[currDiagIdx] = curr
+        
+        n += 1
+        
+        if currDiagIdx == 0 {
+            currDiagIdx = 1
+            continue
+        }
+        
+        if currDiagIdx < 0 {
+            currDiagIdx = 1-currDiagIdx
+            continue
+        }
+        
+        currDiagIdx *= -1
+    }
+    
+    return output
+    
+}
+
+public func estimateTimeComplexity<T:VectorType>(dims: [Int], operation: (T,T) -> T) -> (Double, Double, Double, Double) {
     
     let elapsedTimes = getElapsedTimeData(dims: dims, operation: operation)
+    let totalTime = elapsedTimes.reduce(0, +)
     let logElapsedTimes = elapsedTimes.map{ log($0) }
     
     let logDims = dims.map{ log(Double($0)) }
 
-    let (omega, _) = getLinearFitCoefficientsFromLeastSquaresMethod(logDims, logElapsedTimes)
+    let (omega, intercept) = getLinearFitCoefficientsFromLeastSquaresMethod(logDims, logElapsedTimes)
     
     let r_sq = getRSquaredCoefficient(logDims, logElapsedTimes)
-    return (omega, r_sq)
+    return (omega, r_sq, intercept, totalTime)
     
 }
 
@@ -48,6 +109,7 @@ public func getElapsedTimeData<T: VectorType>(dims: [Int], operation: (T,T) -> T
     
     return times
 }
+
 
 
 
