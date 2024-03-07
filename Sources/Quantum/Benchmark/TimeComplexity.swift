@@ -69,9 +69,9 @@ public func makeMatrixByDiagonalDensity(in space: VectorSpace<ComplexReal>, dens
     
 }
 
-public func estimateTimeComplexity<T:VectorType>(dims: [Int], operation: (T,T) -> T) -> (Double, Double, Double, Double) {
+public func estimateTimeComplexity(codeToExecute: (Int) -> Void, dims: [Int]) -> (Double, Double, Double, Double) {
     
-    let elapsedTimes = getElapsedTimeData(dims: dims, operation: operation)
+    let elapsedTimes = getElapsedTimeData(codeToExecute: codeToExecute, dims: dims)
     let totalTime = elapsedTimes.reduce(0, +)
     let logElapsedTimes = elapsedTimes.map{ log($0) }
     
@@ -85,20 +85,13 @@ public func estimateTimeComplexity<T:VectorType>(dims: [Int], operation: (T,T) -
 }
 
 
-public func getElapsedTimeData<T: VectorType>(dims: [Int], operation: (T,T) -> T) -> [Double]{
+public func getElapsedTimeData(codeToExecute: (Int) -> Void, dims: [Int]) -> [Double]{
     
     var times = [Double](repeating: 0, count: dims.count)
     for i in 0..<dims.count {
         
-        let currentSpace = VectorSpace<T.ScalarField>(dimension: dims[i], label: "Operation Time Complexity Space for dim = \(dims[i])")
-        
-        let lhs = T(elements: [T.ScalarField](repeating: T.ScalarField(Int.random(in: 1...10)), count: dims[i]*dims[i]), in: currentSpace)
-        let rhs = T(elements: [T.ScalarField](repeating: T.ScalarField(Int.random(in: 1...10)), count: dims[i]*dims[i]), in: currentSpace)
-        
-        
         let startTime = clock()
-        
-        let _ = operation(lhs, rhs)
+        codeToExecute(dims[i])
         let endTime = clock()
         
         let elapsedTime = Double((endTime - startTime))/Double(CLOCKS_PER_SEC/1_000)
@@ -113,12 +106,12 @@ public func getElapsedTimeData<T: VectorType>(dims: [Int], operation: (T,T) -> T
 
 
 
-public func storeElapsedTimeDataToFile<T: VectorType>(dims: [Int], operation: (T,T) -> T, filename: String) {
+public func storeElapsedTimeDataToFile(codeToExecute: (Int) -> Void, dims: [Int], pathFromHomeToFile: String) {
     
-    let outputText = convertElapsedTimeDataToWriteableFormat(dims: dims, operation: operation)
+    let outputText = convertElapsedTimeDataToWriteableFormat(codeToExecute: codeToExecute, dims: dims)
     
-    let pathToFile = FileManager.default.homeDirectoryForCurrentUser.path + "/Desktop/rtData/"
-    let writeFilename = pathToFile + "'\(filename)'"
+    let writeFilename = FileManager.default.homeDirectoryForCurrentUser.path + pathFromHomeToFile
+    
     
     _ = FileManager.default.createFile(atPath: writeFilename, contents: nil, attributes: nil)
     
@@ -131,9 +124,9 @@ public func storeElapsedTimeDataToFile<T: VectorType>(dims: [Int], operation: (T
     
 }
 
-public func convertElapsedTimeDataToWriteableFormat<T: VectorType> (dims: [Int], operation: (T,T) -> T) -> String {
+public func convertElapsedTimeDataToWriteableFormat(codeToExecute: (Int) -> Void, dims: [Int]) -> String {
     
-    let times = getElapsedTimeData(dims: dims, operation: operation)
+    let times = getElapsedTimeData(codeToExecute: codeToExecute, dims: dims)
     var outputText = ""
     
     for i in 0..<dims.count {

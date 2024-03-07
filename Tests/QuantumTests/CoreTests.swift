@@ -432,7 +432,26 @@ final class CoreTests: XCTestCase {
     }
    
     
+    func test_SEPC_tensorProdBasisVecWithLeftIdentity() throws {
+        let identityDim = 3
+        let basisDim = 4
+        
+        XCTAssertEqual(SEPC_tensorProdBasisVecWithLeftIdentity(identityDimension: identityDim, basisStateDimension: basisDim, basisStateIdx: 0), [0,4,8])
+        XCTAssertEqual(SEPC_tensorProdBasisVecWithLeftIdentity(identityDimension: identityDim, basisStateDimension: basisDim, basisStateIdx: 1), [1,5,9])
+        XCTAssertEqual(SEPC_tensorProdBasisVecWithLeftIdentity(identityDimension: identityDim, basisStateDimension: basisDim, basisStateIdx: 2), [2,6,10])
+        XCTAssertEqual(SEPC_tensorProdBasisVecWithLeftIdentity(identityDimension: identityDim, basisStateDimension: basisDim, basisStateIdx: 3), [3,7,11])
+    }
     
+    func test_SEPC_nonSquareTensorProdWithRightIdentity() throws {
+        
+        let lhsSEPC1 = [1,4]
+        let identityDim1 = 2
+        XCTAssertEqual(SEPC_nonSquareTensorProdWithRightIdentity(identityDimension: identityDim1, lhs: lhsSEPC1), [2,3,8,9])
+        
+        let lhsSEPC2 = [0,2,7,4]
+        let identityDim2 = 3
+        XCTAssertEqual(SEPC_nonSquareTensorProdWithRightIdentity(identityDimension: identityDim2, lhs: lhsSEPC2), [0,1,2,6,7,8,21,22,23,12,13,14])
+    }
     
     func testLinearFitting() throws {
         
