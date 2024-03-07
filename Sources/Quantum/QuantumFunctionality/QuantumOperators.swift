@@ -236,7 +236,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     }
     
     public func exponentialEulerFormulaSigmaY(_ theta: Real) -> MatrixOperator {
-        let i = ScalarField( real: Real(0.0), imag: Real(1.0) )
+        let i = ScalarField(real: Real(0.0), imag: Real(1.0) )
         return self.identityOperator * Real.cos(theta) + i * self.sigmaY * Real.sin(theta)
     }
     
@@ -262,6 +262,87 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         
         return half * (self.identityOperator * ( f(theta) + f(-theta) ) + na * ( f(theta) - f(-theta) ) )
     }
+    
+    
+    public var identityOperator_diagonalSparse: DiagonalSparseMatrix<ComplexReal> {return makeIdentityMatrixDiagonalSparse()}
+    public var SigmaZ_diagonalSparse: DiagonalSparseMatrix<ComplexReal> {return makeSigmaZDiagonalSparse()}
+    public var sigmaPlus_diagonalSparse: DiagonalSparseMatrix<ComplexReal> { return makeSpinRaisingDiagonalSparse() }
+    public var sigmaMinus_diagonalSparse: DiagonalSparseMatrix<ComplexReal> { return makeSpinLoweringDiagonalSparse() }
+    public var numberOperator_diagonalSparse: DiagonalSparseMatrix<ComplexReal> { return makeNumberOperatorDiagonalSparse() }
+    public var annhilationOperator_diagonalSparse: DiagonalSparseMatrix<ComplexReal> { return makeAnnhilationOperatorDiagonalSparse() }
+    public var creationOperator_diagonalSparse: DiagonalSparseMatrix<ComplexReal> { return makeCreationOperatorDiagonalSparse() }
+    
+    
+    public func makeIdentityMatrixDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        var mainDiag = MatrixDiagonal<ComplexReal>(dimension: dimension, diagIdx: 0, elements: [:])
+        
+        for i in 0..<dimension {
+            mainDiag[i] = I
+        }
+        
+        return DiagonalSparseMatrix(in: self, diagonals: [0: mainDiag])
+    }
+    
+    public func makeSigmaZDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
+            
+        var Sz = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [0: MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 0, elements: [0:I, 1:-I])])
+        
+        return Sz
+    }
+    
+    public func makeSpinRaisingDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
+        
+        var S_plus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 1, elements: [0:I])])
+        
+        return S_plus
+    }
+    
+    public func makeSpinLoweringDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
+        
+        var S_minus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [-1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: -1, elements: [1:I])])
+        
+        return S_minus
+    }
+    
+    
+    public func makeNumberOperatorDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        
+        var mainDiag = MatrixDiagonal<ComplexReal>(dimension: dimension, diagIdx: 0, elements: [:])
+        
+        for i in 1..<dimension {
+            mainDiag[i] = ComplexReal(real: Real(i))
+        }
+        
+        return DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [0: mainDiag])
+    }
+    
+    public func makeAnnhilationOperatorDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        
+        var oneDiag = MatrixDiagonal<ComplexReal>(dimension: dimension, diagIdx: 1, elements: [:])
+        
+        for i in 0..<dimension-1 {
+            oneDiag[i] = ComplexReal(real: Real.sqrt(Real(i)))
+        }
+        
+        return DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [1: oneDiag])
+    }
+    
+    
+    public func makeCreationOperatorDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
+        
+        var minusOneDiag = MatrixDiagonal<ComplexReal>(dimension: dimension, diagIdx: -1, elements: [:])
+        
+        for i in 1..<dimension {
+            minusOneDiag[i] = ComplexReal(real: Real.sqrt(Real(i)))
+        }
+        
+        return DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [-1: minusOneDiag])
+    }
+    
+    
 
 }
 //  Created by M J Everitt on 21/01/2022.
