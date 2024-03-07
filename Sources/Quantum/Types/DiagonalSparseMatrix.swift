@@ -93,19 +93,19 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     }
     
     
-    public static func / (left: DiagonalSparseMatrix<T>, right: T) -> DiagonalSparseMatrix<T> {
+    public static func / (left: DiagonalSparseMatrix<T>, right: ScalarField) -> DiagonalSparseMatrix<T> {
         var output = Self(in: left.space)
         output.diagonals = left.diagonals.mapValues({$0 / right})
         return output
     }
     
-    public static func * (left: T, right: DiagonalSparseMatrix<T>) -> DiagonalSparseMatrix<T> {
+    public static func * (left: ScalarField, right: DiagonalSparseMatrix<T>) -> DiagonalSparseMatrix<T> {
         var output = Self(in: right.space)
         output.diagonals = right.diagonals.mapValues({$0 * left})
         return output
     }
     
-    public static func * (left: DiagonalSparseMatrix<T>, right: T) -> DiagonalSparseMatrix<T> {
+    public static func * (left: DiagonalSparseMatrix<T>, right: ScalarField) -> DiagonalSparseMatrix<T> {
         var output = Self(in: left.space)
         output.diagonals = left.diagonals.mapValues({$0 * right})
         return output
@@ -333,17 +333,17 @@ public struct MatrixDiagonal<T: Scalar> {
         
     }
     
-    public static func * (lhs: MatrixDiagonal, rhs: T) -> Self {
+    public static func * (lhs: MatrixDiagonal, rhs: ScalarField) -> Self {
         
         return Self(dimension: lhs.dimension, diagIdx: lhs.diagIdx, elements: lhs.elements.mapValues({$0 * rhs}))
     }
     
-    public static func * (lhs: T, rhs: MatrixDiagonal) -> Self {
+    public static func * (lhs: ScalarField, rhs: MatrixDiagonal) -> Self {
         
         return Self(dimension: rhs.dimension, diagIdx: rhs.diagIdx, elements: rhs.elements.mapValues({$0 * lhs}))
     }
     
-    public static func / (lhs: MatrixDiagonal, rhs: T) -> Self {
+    public static func / (lhs: MatrixDiagonal, rhs: ScalarField) -> Self {
         
         return Self(dimension: lhs.dimension, diagIdx: lhs.diagIdx, elements: lhs.elements.mapValues({$0 / rhs}))
     }
