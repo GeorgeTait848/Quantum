@@ -193,7 +193,7 @@ public func convertIntToBasisState(intToConvert n: Int, basisStateDimensions b: 
     /*
      Function to be used in partial trace algorithm.
      When tracing out an arbitrary number of spaces, each with arbitrary dimension hilbert space,
-     it is imperitive to ensure all possible combinations of basis states being traced out are accounted for.
+     it is necessary to ensure all possible combinations of basis states being traced out are accounted for.
      
      A set of spaces {H_i} will have total dimension d = 𝛱_i(dim(H_i)), hence d basis states to trace out.
      

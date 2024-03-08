@@ -114,17 +114,17 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     public static func * (lhs: DiagonalSparseMatrix<T>, rhs: Vector<T>) -> Vector<T> {
         
         var output = Vector(in: lhs.space)
-        for i in 0..<output.count {
-            for (lhsDiagIdx, lhsDiag) in lhs.diagonals {
-                guard let lhsVal = lhsDiag[i] else {continue}
-                
-                let column = i + lhsDiagIdx
+        
+        for (lhsDiagIdx, lhsDiag) in lhs.diagonals {
+            for (row, lhsVal) in lhsDiag.elements {
+                let column = row + lhsDiagIdx
                 if (column >= 0 && column < output.count) {
-                    output[i] = output[i] + lhsVal * rhs[column]
+                    output[row] = output[row] + lhsVal * rhs[column]
                 }
-                
             }
+            
         }
+        
         
         return output
     }
