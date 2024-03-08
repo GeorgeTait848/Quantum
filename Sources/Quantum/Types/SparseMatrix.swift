@@ -202,22 +202,48 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     
     public static func * (lhs: SparseMatrix<ScalarField>,
                           rhs: Vector<ScalarField>) -> Vector<ScalarField> {
-        assert(lhs.columns == rhs.space.dimension, "Index out of range")
-        assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
+        //        assert(lhs.columns == rhs.space.dimension, "Index out of range")
+        //        assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
+        //
+        //        var output = Vector(in: lhs.space)
+        //
+        //        for matrixElement in lhs.values {
+        //            let col = matrixElement.col
+        //            let row = matrixElement.row
+        //            let temp = matrixElement.value * rhs[col]
+        //            output[row] = output[row] + temp
+        //        }
+        //        return output
         
-        var output = Vector(in: lhs.space)
         
-        for matrixElement in lhs.values {
-            let col = matrixElement.col
-            let row = matrixElement.row
-            let temp = matrixElement.value * rhs[col]
-            output[row] = output[row] + temp
+        guard lhs.space == rhs.space else {
+            fatalError("Number of columns in the matrix must match the size of the vector.")
         }
-        return output
         
+        var outputElements = [T](repeating: T(0), count: lhs.space.dimension)
+        let dispatchGroup = DispatchGroup() // Initialize dispatch group
         
+        DispatchQueue.concurrentPerform(iterations: lhs.values.count) { index in
+            let row = lhs.values[index].row
+            let col = lhs.values[index].col
+            let value = lhs.values[index].value
+            
+            // Enter the dispatch group before starting the task
+            dispatchGroup.enter()
+            
+            DispatchQueue.global(qos: .userInteractive).async {
+                // Perform the matrix-vector multiplication
+                outputElements[row] = outputElements[row] + value * rhs[col]
+                
+                // Leave the dispatch group after completing the task
+                dispatchGroup.leave()
+            }
+        }
         
+        // Wait for all tasks to complete
+        dispatchGroup.wait()
         
+        return Vector(elements: outputElements, in: lhs.space)
     }
     
     
@@ -227,7 +253,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
             fatalError("Number of columns in the matrix must match the size of the vector.")
         }
         
-        var result = Vector(in: vector.space)
+        var outputElements = [T](repeating: T(0), count: space.dimension)
         let dispatchGroup = DispatchGroup() // Initialize dispatch group
         
         DispatchQueue.concurrentPerform(iterations: values.count) { index in
@@ -240,7 +266,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
             
             DispatchQueue.global(qos: .userInteractive).async {
                 // Perform the matrix-vector multiplication
-                result[row] = result[row] + value * vector[col]
+                outputElements[row] = outputElements[row] + value * vector[col]
                 
                 // Leave the dispatch group after completing the task
                 dispatchGroup.leave()
@@ -250,7 +276,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         // Wait for all tasks to complete
         dispatchGroup.wait()
         
-        return result
+        return Vector(elements: outputElements, in: space)
     }
     
 }

@@ -258,7 +258,7 @@ final class CoreTests: XCTestCase {
     
     
     func testSparseMatrixTimesVectorParallel() throws {
-        let space = StateSpace(dimension: 200, label: "")
+        let space = StateSpace(dimension: 5000, label: "")
         let a = space.creationOperator
         let a_sparse = SparseMatrix(from: a)
         
