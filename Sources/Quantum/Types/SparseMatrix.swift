@@ -214,25 +214,37 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
 //            output[row] = output[row] + temp
 //        }
 //        return output
-        
+
         guard lhs.space == rhs.space else {
-            fatalError("Number of columns in the matrix must match the size of the vector.")
-        }
-        var result = Vector(in: rhs.space)
-        // Dispatch group to synchronize the completion of parallel tasks
-        let dispatchGroup = DispatchGroup()
+                fatalError("Number of columns in the matrix must match the size of the vector.")
+            }
+            
+            var result = Vector(in: rhs.space)
+            let dispatchGroup = DispatchGroup() // Initialize dispatch group
+
         DispatchQueue.concurrentPerform(iterations: lhs.values.count) { index in
             let row = lhs.values[index].row
             let col = lhs.values[index].col
             let value = lhs.values[index].value
-            // Ensure this operation is thread-safe
-            DispatchQueue.global(qos: .userInitiated).sync {
+                
+            // Enter the dispatch group before starting the task
+            dispatchGroup.enter()
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                // Perform the matrix-vector multiplication
                 result[row] = result[row] + value * rhs[col]
+                
+                // Leave the dispatch group after completing the task
+                dispatchGroup.leave()
             }
         }
-        // Wait for all tasks to complete
-        dispatchGroup.wait()
-        return result
+            
+            // Wait for all tasks to complete
+            dispatchGroup.wait()
+            
+            return result
+        
+
     }
     
     
