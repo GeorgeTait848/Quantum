@@ -217,7 +217,7 @@ final class CoreTests: XCTestCase {
         let v = Vector(elements: [1.0,2.0,3.0], in: space)
         
         XCTAssert( apn * v == sparse_apn * v )
-        XCTAssert(apn * v == sparse_apn.multiply(vector: v))
+        XCTAssert(apn * v == sparse_apn.parallelVectorMultiply(vector: v))
 //        print(apn * v)
 //        print(sparse_apn.multiply(vector: v))
         XCTAssert( Matrix(fromSparse: 2.0 * sparse_apn) == 2.0 * apn)
@@ -254,6 +254,17 @@ final class CoreTests: XCTestCase {
                                               6.0, 7.0 , 12.0 , 14.0,
                                               0.0, 15.0, 0.0  , 20.0,
                                               18.0, 21.0,24.0  , 28.0] )
+    }
+    
+    
+    func testSparseMatrixTimesVectorParallel() throws {
+        let space = StateSpace(dimension: 200, label: "")
+        let a = space.creationOperator
+        let a_sparse = SparseMatrix(from: a)
+        
+        let v = space.makeCoherentState(alpha: ComplexReal(real: 1.0))
+        
+        XCTAssert( a*v == a_sparse.parallelVectorMultiply(vector: v))
     }
     
     func test_makingDiagonalSparseMatrix() throws {

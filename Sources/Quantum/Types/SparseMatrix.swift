@@ -8,7 +8,7 @@
 import Foundation
 
 public struct SparseMatrix<T: Scalar>: OperatorType {
-
+    
     
     public typealias ScalarField = T
     public var space: VectorSpace<ScalarField>
@@ -55,8 +55,8 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     public static func * (left: ScalarField, right: Self) -> Self {
         return Self(values: right.values.map( { $0 * left } ), in: right.space)
     }
-
-
+    
+    
     public static func scalarBinaryOperationAdditionLogic(
         lhs: SparseMatrix<ScalarField>,
         rhs: SparseMatrix<ScalarField>,
@@ -132,16 +132,16 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
          It does not conform to my current view of clean code and needs to be re-written
          for clarity. This should only be done once a final sparse representation has been
          decided.
-        */
-
+         */
+        
         assert(lhs.space == rhs.space,
                "Cant multiply sparse matrices from different spaces")
         let dim = lhs.space.dimension
-
+        
         var cntr = 0
         var kk = 0
         var k = 0
-
+        
         var output = SparseMatrix(in: lhs.space)
         var B_el_t = rhs.transpose()
         
@@ -189,86 +189,70 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         output.values.sort()
         return output
     }
-
-        
+    
+    
     public func transpose() -> SparseMatrix {
-                var output = SparseMatrix(in: self.space)
-                for element in self.values {
-                    output.values.append(CoordinateStorage(value: element.value, row: element.col, col: element.row))
-                }
-                return output
+        var output = SparseMatrix(in: self.space)
+        for element in self.values {
+            output.values.append(CoordinateStorage(value: element.value, row: element.col, col: element.row))
+        }
+        return output
     }
-     
+    
     
     public static func * (lhs: SparseMatrix<ScalarField>,
                           rhs: Vector<ScalarField>) -> Vector<ScalarField> {
-//        assert(lhs.columns == rhs.space.dimension, "Index out of range")
-//        assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
-//
-//        var output = Vector(in: lhs.space)
-//
-//        for matrixElement in lhs.values {
-//            let col = matrixElement.col
-//            let row = matrixElement.row
-//            let temp = matrixElement.value * rhs[col]
-//            output[row] = output[row] + temp
-//        }
-//        return output
-
-        guard lhs.space == rhs.space else {
-                fatalError("Number of columns in the matrix must match the size of the vector.")
-            }
+        assert(lhs.columns == rhs.space.dimension, "Index out of range")
+        assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
+        
+        var output = Vector(in: lhs.space)
+        
+        for matrixElement in lhs.values {
+            let col = matrixElement.col
+            let row = matrixElement.row
+            let temp = matrixElement.value * rhs[col]
+            output[row] = output[row] + temp
+        }
+        return output
+        
+        
+        
+        
+    }
+    
+    
+    func parallelVectorMultiply(vector: Vector<T>) -> Vector<T> {
+        
+        guard space == vector.space else {
+            fatalError("Number of columns in the matrix must match the size of the vector.")
+        }
+        
+        var result = Vector(in: vector.space)
+        let dispatchGroup = DispatchGroup() // Initialize dispatch group
+        
+        DispatchQueue.concurrentPerform(iterations: values.count) { index in
+            let row = values[index].row
+            let col = values[index].col
+            let value = values[index].value
             
-            var result = Vector(in: rhs.space)
-            let dispatchGroup = DispatchGroup() // Initialize dispatch group
-
-        DispatchQueue.concurrentPerform(iterations: lhs.values.count) { index in
-            let row = lhs.values[index].row
-            let col = lhs.values[index].col
-            let value = lhs.values[index].value
-                
             // Enter the dispatch group before starting the task
             dispatchGroup.enter()
             
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInteractive).async {
                 // Perform the matrix-vector multiplication
-                result[row] = result[row] + value * rhs[col]
+                result[row] = result[row] + value * vector[col]
                 
                 // Leave the dispatch group after completing the task
                 dispatchGroup.leave()
             }
         }
-            
-            // Wait for all tasks to complete
-            dispatchGroup.wait()
-            
-            return result
         
-
-    }
-    
-    
-    func multiply(vector: Vector<T>) -> Vector<T> {
-        
-        guard space == vector.space else {
-            fatalError("Number of columns in the matrix must match the size of the vector.")
-        }
-        var result = Vector(in: vector.space)
-        // Dispatch group to synchronize the completion of parallel tasks
-        let dispatchGroup = DispatchGroup()
-        DispatchQueue.concurrentPerform(iterations: values.count) { index in
-            let row = values[index].row
-            let col = values[index].col
-            let value = values[index].value
-            // Ensure this operation is thread-safe
-            DispatchQueue.global(qos: .userInitiated).sync {
-                result[row] = result[row] + value * vector[col]
-            }
-        }
         // Wait for all tasks to complete
         dispatchGroup.wait()
+        
         return result
     }
+    
 }
 
 extension Matrix {
