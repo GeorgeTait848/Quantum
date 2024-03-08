@@ -286,7 +286,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSigmaZDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
             
-        var Sz = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [0: MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 0, elements: [0:I, 1:-I])])
+        let Sz = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [0: MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 0, elements: [0:I, 1:-I])])
         
         return Sz
     }
@@ -294,7 +294,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSpinRaisingDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
-        var S_plus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 1, elements: [0:I])])
+        let S_plus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 1, elements: [0:I])])
         
         return S_plus
     }
@@ -302,7 +302,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSpinLoweringDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
-        var S_minus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [-1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: -1, elements: [1:I])])
+        let S_minus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [-1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: -1, elements: [1:I])])
         
         return S_minus
     }

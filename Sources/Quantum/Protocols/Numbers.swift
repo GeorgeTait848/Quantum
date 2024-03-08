@@ -109,6 +109,29 @@ public protocol ClosedUnderScalarFieldMultiplication: definedOverScalarField {
     static func * (left: ScalarField, right: Self) -> Self
     static func / (left: Self, right: ScalarField) -> Self
 }
+public protocol providesDoubleAndIntMultiplication: ClosedUnderScalarFieldMultiplication {
+}
+
+extension providesDoubleAndIntMultiplication  {
+    public static func * (left: Self, right: Double) -> Self {
+        return left * ScalarField(right)
+    }
+    public static func * (left: Double, right: Self) -> Self {
+        return ScalarField(left) * right
+    }
+    public static func / (left: Self, right: Double) -> Self {
+        return left / ScalarField(right)
+    }
+    public static func * (left: Self, right: Int) -> Self {
+        return left * ScalarField(right)
+    }
+    public static func * (left: Int, right: Self) -> Self {
+        return ScalarField(left) * right
+    }
+    public static func / (left: Self, right: Int) -> Self {
+        return left / ScalarField(right)
+    }
+}
 
 // MARK: - Extensions
 
@@ -137,7 +160,6 @@ public extension Multipliable where Self: Has_getMultiplicativeIdentity {
         self.power(n,identity: Self.getMultiplicativeIdentity())
     }
 }
-
 //  Created by M J Everitt on 17/01/2022.
 
 

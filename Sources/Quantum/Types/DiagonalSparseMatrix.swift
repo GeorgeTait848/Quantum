@@ -9,7 +9,6 @@ import Foundation
 
 
 public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
-    
     public typealias ScalarField = T
     public var space: VectorSpace<T>
     var diagonals: [Int: MatrixDiagonal<T>]
@@ -193,6 +192,8 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     
     
 }
+
+extension DiagonalSparseMatrix: providesDoubleAndIntMultiplication {}
 
 extension Matrix {
     public init (from diagonalSparseMatrix: DiagonalSparseMatrix<T>) {

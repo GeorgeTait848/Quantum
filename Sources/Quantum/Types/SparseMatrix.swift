@@ -291,5 +291,7 @@ extension CoordinateStorage: Comparable where T: Equatable {
     }
 }
 
-extension SparseMatrix: providesDoubleAndIntMultiplication where T: ComplexNumber {}
+
+extension SparseMatrix: ClosedUnderScalarFieldMultiplication {}
+extension SparseMatrix: providesDoubleAndIntMultiplication {}
 //  Created by M J Everitt on 20/01/2022.

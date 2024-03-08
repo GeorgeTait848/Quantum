@@ -172,5 +172,16 @@ final class QuantumTests: XCTestCase {
         XCTAssertEqual(diagSparseSigmaY.diagonals[-1]!.elements, [1:Complex(real: 0, imag: 1)])
         XCTAssertNil(diagSparseSigmaY.diagonals[0])
     }
+    
+    
+    func test_diagSparseOperatorScalarMult() throws {
+
+        let space = StateSpace(dimension: 4, label: "")
+        let I = space.identityOperator_diagonalSparse
+        let halfI = 0.5*I
+        let minusi = ComplexReal(real: 0.0, imag: -1)
+        
+        print(Matrix(from: minusi*I))
+    }
 }
 //  Created by  M J Everitt on 17/01/2022.

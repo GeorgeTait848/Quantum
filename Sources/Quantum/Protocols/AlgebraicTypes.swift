@@ -26,7 +26,7 @@ public protocol livesInAVectorSpace: definedOverScalarField {
     var space: VectorSpace<ScalarField> { get set }
 }
 
-public protocol OperatorType: ClosedUnderScalarFieldMultiplication,
+public protocol OperatorType: providesDoubleAndIntMultiplication,
                               Addable,
                               Subtractable,
                               Multipliable,
@@ -114,31 +114,6 @@ extension VectorType {
     public static prefix func - (value: Self) -> Self {
         let output = elementWisePrefixOperation(array: value.elements, operation: - )
         return Self(elements: output, in: value.space)
-    }
-}
-
-// MARK: - Enable double * and / For use with Complex Types
-public protocol providesDoubleAndIntMultiplication: ClosedUnderScalarFieldMultiplication {
-}
-
-extension providesDoubleAndIntMultiplication  {
-    public static func * (left: Self, right: Double) -> Self {
-        return left * ScalarField(right)
-    }
-    public static func * (left: Double, right: Self) -> Self {
-        return ScalarField(left) * right
-    }
-    public static func / (left: Self, right: Double) -> Self {
-        return left / ScalarField(right)
-    }
-    public static func * (left: Self, right: Int) -> Self {
-        return left * ScalarField(right)
-    }
-    public static func * (left: Int, right: Self) -> Self {
-        return ScalarField(left) * right
-    }
-    public static func / (left: Self, right: Int) -> Self {
-        return left / ScalarField(right)
     }
 }
 //  Created by M J Everitt on 17/01/2022.
