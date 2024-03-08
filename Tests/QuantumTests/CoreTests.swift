@@ -217,6 +217,9 @@ final class CoreTests: XCTestCase {
         let v = Vector(elements: [1.0,2.0,3.0], in: space)
         
         XCTAssert( apn * v == sparse_apn * v )
+        XCTAssert(apn * v == sparse_apn.multiply(vector: v))
+//        print(apn * v)
+//        print(sparse_apn.multiply(vector: v))
         XCTAssert( Matrix(fromSparse: 2.0 * sparse_apn) == 2.0 * apn)
         XCTAssert( Matrix(fromSparse: sparse_apn * 2.0) == 2.0 * apn)
         XCTAssert( Matrix(fromSparse: sparse_apn * 2.0) == apn * 2.0)

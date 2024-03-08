@@ -202,18 +202,60 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     
     public static func * (lhs: SparseMatrix<ScalarField>,
                           rhs: Vector<ScalarField>) -> Vector<ScalarField> {
-        assert(lhs.columns == rhs.space.dimension, "Index out of range")
-        assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
-
-        var output = Vector(in: lhs.space)
+//        assert(lhs.columns == rhs.space.dimension, "Index out of range")
+//        assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
+//
+//        var output = Vector(in: lhs.space)
+//
+//        for matrixElement in lhs.values {
+//            let col = matrixElement.col
+//            let row = matrixElement.row
+//            let temp = matrixElement.value * rhs[col]
+//            output[row] = output[row] + temp
+//        }
+//        return output
         
-        for matrixElement in lhs.values {
-            let col = matrixElement.col
-            let row = matrixElement.row
-            let temp = matrixElement.value * rhs[col]
-            output[row] = output[row] + temp
+        guard lhs.space == rhs.space else {
+            fatalError("Number of columns in the matrix must match the size of the vector.")
         }
-        return output
+        var result = Vector(in: rhs.space)
+        // Dispatch group to synchronize the completion of parallel tasks
+        let dispatchGroup = DispatchGroup()
+        DispatchQueue.concurrentPerform(iterations: lhs.values.count) { index in
+            let row = lhs.values[index].row
+            let col = lhs.values[index].col
+            let value = lhs.values[index].value
+            // Ensure this operation is thread-safe
+            DispatchQueue.global(qos: .userInitiated).sync {
+                result[row] = result[row] + value * rhs[col]
+            }
+        }
+        // Wait for all tasks to complete
+        dispatchGroup.wait()
+        return result
+    }
+    
+    
+    func multiply(vector: Vector<T>) -> Vector<T> {
+        
+        guard space == vector.space else {
+            fatalError("Number of columns in the matrix must match the size of the vector.")
+        }
+        var result = Vector(in: vector.space)
+        // Dispatch group to synchronize the completion of parallel tasks
+        let dispatchGroup = DispatchGroup()
+        DispatchQueue.concurrentPerform(iterations: values.count) { index in
+            let row = values[index].row
+            let col = values[index].col
+            let value = values[index].value
+            // Ensure this operation is thread-safe
+            DispatchQueue.global(qos: .userInitiated).sync {
+                result[row] = result[row] + value * vector[col]
+            }
+        }
+        // Wait for all tasks to complete
+        dispatchGroup.wait()
+        return result
     }
 }
 
