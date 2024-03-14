@@ -217,9 +217,9 @@ public struct MatrixDiagonal<T: Scalar> {
     
     
     public typealias ScalarField = T
-    var dimension: Int
-    var diagIdx: Int
-    var elements: [Int: T]
+    public var dimension: Int
+    public var diagIdx: Int
+    public var elements: [Int: T]
     
     
     public init(dimension: Int, diagIdx: Int, elements: [Int : T]) {
