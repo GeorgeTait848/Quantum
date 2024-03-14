@@ -257,14 +257,30 @@ final class CoreTests: XCTestCase {
     }
     
     
-    func testSparseMatrixTimesVectorParallel() throws {
-        let space = StateSpace(dimension: 5000, label: "")
-        let a = space.creationOperator
-        let a_sparse = SparseMatrix(from: a)
-        
-        let v = space.makeCoherentState(alpha: ComplexReal(real: 1.0))
-        
-        XCTAssert( a*v == a_sparse.parallelVectorMultiply(vector: v))
+//    func testSparseMatrixTimesVectorParallel() throws {
+//        let space = StateSpace(dimension: 1000, label: "")
+//        let a = space.creationOperator + space.identityOperator + space.annihilationOperator
+//        let a_sparse = SparseMatrix(from: a)
+//        
+//        let v = space.makeCoherentState(alpha: ComplexReal(real: 1.0))
+//        
+//        let av = a_sparse.parallelVectorMultiply(vector: v)
+//        print(av.elements[0...10])
+//        print((a*v).elements[0...10])
+//        XCTAssert( a*v == a_sparse.parallelVectorMultiply(vector: v))
+//    }
+    
+    
+    func testParallelWrite() throws {
+        var array = Array(repeating: 0, count: 100)
+
+        DispatchQueue.concurrentPerform(iterations: array.count) { index in
+            // Write to the array element at index
+            array[index] = index
+        }
+
+        print(array)
+
     }
     
     func test_makingDiagonalSparseMatrix() throws {

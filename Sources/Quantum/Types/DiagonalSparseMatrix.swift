@@ -11,7 +11,7 @@ import Foundation
 public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     public typealias ScalarField = T
     public var space: VectorSpace<T>
-    var diagonals: [Int: MatrixDiagonal<T>]
+    public var diagonals: [Int: MatrixDiagonal<T>]
      
     
     public subscript (diagIdx: Int) -> MatrixDiagonal<T>? {

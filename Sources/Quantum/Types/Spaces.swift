@@ -66,17 +66,21 @@ public class VectorSpace<T: Scalar>: Hashable, definedOverScalarField {
 
 // MARK: - Add Tensor product capability
 extension VectorSpace {
-    convenience public init(tensorProductOf spaces: VectorSpace<ScalarField> ...,
-                            label: String) {
+    convenience public init(tensorProductOf spaces: [VectorSpace<ScalarField>],
+                            label: String, sorted: Bool = false) {
         assert(spaces.count > 1, "Cannot make a tensor product of one space")
-
+        
         var tempDimension = 1
         for space in spaces {
             tempDimension *= space.dimension;
         }
         
-        let sortedSpaces = spaces.sorted(by: {$0.identifier < $1.identifier} )
-        for i in 0 ..< sortedSpaces.count-1 {
+        var sortedSpaces = spaces
+        if !sorted {
+            sortedSpaces = spaces.sorted(by: {$0.identifier < $1.identifier} )
+        }
+        
+       for i in 0 ..< sortedSpaces.count-1 {
             assert(sortedSpaces[i] != sortedSpaces[i+1],
                    "Error: The same space included more than once in tensor product space")
         }
@@ -89,6 +93,24 @@ extension VectorSpace {
         self.init(dimension: tempDimension, label: label + " (tensor product space)")
         setofSpaces = sortedSpaces
     }
+    
+    
+    convenience public init (subSpaceOf totalSpace: VectorSpace<ScalarField>, spacesToKeep: VectorSpace<ScalarField>... , label: String, spacesToKeepIsSorted: Bool = false) {
+        
+        var sortedSpacesToKeep = spacesToKeep
+        if !spacesToKeepIsSorted {
+            sortedSpacesToKeep = spacesToKeep.sorted(by: {$0.identifier < $1.identifier})
+        }
+        
+        assert(sortedSpacesToKeep != totalSpace.setofSpaces, "Cannot trace into a subspace which is the total space.")
+        
+        //TODO: check each space in spacesToKeep is a subspace of the totalSpace. For now, assume that it is.
+        
+        self.init(tensorProductOf: sortedSpacesToKeep , label: label, sorted: true)
+        
+    }
+    
+    
     
     public func tensorProduct(of A: Matrix<ScalarField>,
                               with B: Matrix<ScalarField>)

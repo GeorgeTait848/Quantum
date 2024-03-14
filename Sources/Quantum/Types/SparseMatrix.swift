@@ -221,30 +221,19 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         }
         
         var outputElements = [T](repeating: T(0), count: lhs.space.dimension)
-        let dispatchGroup = DispatchGroup() // Initialize dispatch group
-        
+
         DispatchQueue.concurrentPerform(iterations: lhs.values.count) { index in
+            
             let row = lhs.values[index].row
             let col = lhs.values[index].col
             let value = lhs.values[index].value
-            
-            // Enter the dispatch group before starting the task
-            dispatchGroup.enter()
-            
-            DispatchQueue.global(qos: .userInteractive).async {
-                // Perform the matrix-vector multiplication
-                outputElements[row] = outputElements[row] + value * rhs[col]
+            outputElements[row] = outputElements[row] + value * rhs[col]
                 
-                // Leave the dispatch group after completing the task
-                dispatchGroup.leave()
+               
             }
-        }
-        
-        // Wait for all tasks to complete
-        dispatchGroup.wait()
-        
         return Vector(elements: outputElements, in: lhs.space)
-    }
+        
+        }
     
     
     func parallelVectorMultiply(vector: Vector<T>) -> Vector<T> {
