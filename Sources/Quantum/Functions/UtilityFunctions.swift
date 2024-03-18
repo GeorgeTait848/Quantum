@@ -249,8 +249,25 @@ public func SEPC_matrixTensorProdWithRightBasisState(basisStateDimension: Int, b
 
 //  Created by M J Everitt on 17/01/2022.
 
+public func getBasisStateContributionToPartialTrace<T: OperatorType> (traceInto subspace: VectorSpace<T.ScalarField>,
+                                                                      fullMatrix: T,
+                                                                      selectionIndices: [Int]) -> T {
+    
+    var output = T(in: subspace)
+    
+    for row in 0..<subspace.dimension {
+        for col in 0..<subspace.dimension {
+            output[row,col] = fullMatrix[selectionIndices[row], selectionIndices[col]]
+        }
+    }
+    
+    return output
+    
+}
 
-public func getBasisStateContributionToPartialTrace(totalSpaceDimensions: [Int], traceOutSpacesAtIdx: [Int], currentBasisState: [Int]) -> [Int] {
+public func getBasisStatePartialTraceSelectionIndices(totalSpaceDimensions: [Int],
+                                                      traceOutSpacesAtIdx: [Int],
+                                                      currentBasisState: [Int]) -> [Int] {
     
     let traceOutSpacesDimensions = traceOutSpacesAtIdx.map{totalSpaceDimensions[$0]}
     var SEPC_indices: [Int]? = nil
@@ -278,7 +295,9 @@ public func getBasisStateContributionToPartialTrace(totalSpaceDimensions: [Int],
         if SEPC_indices == nil {
             
             let basisDimension = traceOutSpacesDimensions[traceOutNextIdx]
-            SEPC_indices = SEPC_tensorProdBasisVecWithLeftIdentity(identityDimension: identityDimension, basisStateDimension: basisDimension , basisStateIdx: currentBasisState[traceOutNextIdx])
+            SEPC_indices = SEPC_tensorProdBasisVecWithLeftIdentity(identityDimension: identityDimension,
+                                                                   basisStateDimension: basisDimension ,
+                                                                   basisStateIdx: currentBasisState[traceOutNextIdx])
             identityDimension = 1
             traceOutNextIdx += 1
             continue
@@ -295,14 +314,13 @@ public func getBasisStateContributionToPartialTrace(totalSpaceDimensions: [Int],
         
         
         let basisDimension = traceOutSpacesDimensions[traceOutNextIdx]
-        SEPC_indices = SEPC_matrixTensorProdWithRightBasisState(basisStateDimension: basisDimension, basisStateIdx: currentBasisState[traceOutNextIdx], lhs: SEPC_indices!)
+        SEPC_indices = SEPC_matrixTensorProdWithRightBasisState(basisStateDimension: basisDimension,
+                                                                basisStateIdx: currentBasisState[traceOutNextIdx],
+                                                                lhs: SEPC_indices!)
         traceOutNextIdx += 1
         identityDimension = 1
         continue
-        
-        
     }
     
     return SEPC_indices!
-    
 }

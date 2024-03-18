@@ -8,6 +8,31 @@
 import Foundation
 
 public struct SparseMatrix<T: Scalar>: OperatorType {
+    public subscript(row: Int, col: Int) -> T {
+        
+        get {
+            var output = T(0)
+            for elem in values {
+                if elem.row != row {
+                    continue
+                }
+                
+                if elem.col != col {
+                    continue
+                }
+                
+                output = elem.value
+                break
+            }
+            return output
+        }
+        
+        set {
+            values.append(CoordinateStorage(value: newValue, row: row, col: col))
+            values.sort()
+        }
+    }
+    
     
     
     public typealias ScalarField = T

@@ -32,6 +32,8 @@ public protocol OperatorType: providesDoubleAndIntMultiplication,
                               Multipliable,
                               livesInAVectorSpace {
     static func * (lhs: Self, rhs: Vector<ScalarField>) -> Vector<ScalarField>
+    subscript (row: Int, col: Int) -> ScalarField {get set}
+    init(in: VectorSpace<ScalarField>)
 }
 
 extension OperatorType {
@@ -52,6 +54,52 @@ extension OperatorType where Self.ScalarField: ComplexNumber {
     public func expectationValue(of psi: Vector<ScalarField>) -> ScalarField {
             checkInSameSpace(self, psi)
             return (self * psi).innerProduct(dualVector: psi)
+    }
+}
+
+
+extension OperatorType {
+    
+    public func traceInto(subSpace: VectorSpace<Self.ScalarField>) -> Self {
+        
+
+        let totalSpaceDimensions = space.setofSpaces.map { $0.dimension }
+        var output = Self(in: subSpace)
+        
+        
+        let identifiersOfTotalSpace = space.setofSpaces.map{$0.identifier}
+        let identifiersOfSpacesToKeep = subSpace.setofSpaces.map{$0.identifier}
+        
+        var spacesToTraceOutIndices: [Int] = []
+        var spacesToTraceOutDimensions: [Int] = []
+        
+        for (idx, id) in identifiersOfTotalSpace.enumerated() {
+            
+            if identifiersOfSpacesToKeep.contains(id) { continue }
+        
+            spacesToTraceOutIndices.append(idx)
+            spacesToTraceOutDimensions.append(space.setofSpaces[idx].dimension)
+        }
+        
+        let traceOutSpacesTotalDimension = spacesToTraceOutDimensions.reduce(1, *)
+        
+        
+        for i in 0..<traceOutSpacesTotalDimension {
+            
+            let currentBasisState = convertIntToBasisState(intToConvert: i, basisStateDimensions: spacesToTraceOutDimensions)
+       
+            let indicesForPartialTrace = getBasisStatePartialTraceSelectionIndices(totalSpaceDimensions: totalSpaceDimensions,
+                                                                                   traceOutSpacesAtIdx: spacesToTraceOutIndices,
+                                                                                   currentBasisState: currentBasisState)
+            
+            output = output + getBasisStateContributionToPartialTrace(traceInto: subSpace,
+                                                                      fullMatrix: self,
+                                                                      selectionIndices: indicesForPartialTrace)
+            
+            
+        }
+        
+        return output
     }
 }
 

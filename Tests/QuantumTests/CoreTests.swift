@@ -247,7 +247,7 @@ final class CoreTests: XCTestCase {
         let matrix1 = Matrix(elements: [1.0,2.0,3.0,4.0], in: space1)
         let space2 = VectorSpace<Double>(dimension: 2, label: "test Space 2")
         let matrix2 = Matrix(elements: [0.0,5.0,6.0,7.0], in: space2)
-        let totalSpace = VectorSpace(tensorProductOf: space1, space2, label: "TP space")
+        let totalSpace = VectorSpace(tensorProductOf: [space1, space2], label: "TP space")
         let bigMatrix = totalSpace.tensorProduct(of: matrix1, with: matrix2)
         
         XCTAssertTrue(bigMatrix.elements == [ 0.0, 5.0 , 0.0  , 10.0 ,
@@ -261,9 +261,9 @@ final class CoreTests: XCTestCase {
 //        let space = StateSpace(dimension: 1000, label: "")
 //        let a = space.creationOperator + space.identityOperator + space.annihilationOperator
 //        let a_sparse = SparseMatrix(from: a)
-//        
+//
 //        let v = space.makeCoherentState(alpha: ComplexReal(real: 1.0))
-//        
+//
 //        let av = a_sparse.parallelVectorMultiply(vector: v)
 //        print(av.elements[0...10])
 //        print((a*v).elements[0...10])
@@ -281,6 +281,66 @@ final class CoreTests: XCTestCase {
 
         print(array)
 
+    }
+    
+    func test_subspaceOfTotalSpaceInit() throws {
+        
+        let twoQubitLeftSpace = VectorSpace<Double>(dimension: 2, label: "two qubit left")
+        let twoQubitRightSpace = VectorSpace<Double>(dimension: 2, label: "two qubit right")
+        
+        let twoQubitTotalSpace = VectorSpace<Double>(tensorProductOf: [twoQubitLeftSpace, twoQubitRightSpace], label: "")
+        
+        let twoQubitSubspace1 = twoQubitTotalSpace.createSubspace(spacesToKeep: twoQubitLeftSpace, label: "")
+        XCTAssert(twoQubitSubspace1 == twoQubitLeftSpace)
+        XCTAssert(twoQubitSubspace1.dimension == 2)
+        
+        let twoQubitSubspace2 = twoQubitTotalSpace.createSubspace(spacesToKeep: twoQubitRightSpace, label: "")
+        print(twoQubitSubspace2.identifier, twoQubitRightSpace.identifier)
+        XCTAssert(twoQubitSubspace2 == twoQubitRightSpace)
+        XCTAssert(twoQubitSubspace2.dimension == 2)
+        
+        
+        let JCSpinSpace = VectorSpace<Double>(dimension: 2, label: "JC Spin Space")
+        let JCFieldSpace = VectorSpace<Double>(dimension: 30, label: "JC Field Space")
+        
+        let JCTotalSpace = VectorSpace(tensorProductOf: [JCSpinSpace, JCFieldSpace], label: "JC Total Space")
+        
+        let JCSubSpace1 = JCTotalSpace.createSubspace(spacesToKeep: JCSpinSpace, label: "")
+        XCTAssert(JCSubSpace1 == JCSpinSpace)
+        XCTAssert(JCSubSpace1.dimension == 2)
+        
+        let JCSubSpace2 = JCTotalSpace.createSubspace(spacesToKeep: JCFieldSpace, label: "")
+        XCTAssert(JCSubSpace2 == JCFieldSpace)
+        XCTAssert(JCSubSpace2.dimension == 30)
+        
+        let quinpartiteSpace1 = VectorSpace<Double>(dimension: 2, label: "Quinpartite Space 1")
+        let quinpartiteSpace2 = VectorSpace<Double>(dimension: 3, label: "Quinpartite Space 2")
+        let quinpartiteSpace3 = VectorSpace<Double>(dimension: 4, label: "Quinpartite Space 3")
+        let quinpartiteSpace4 = VectorSpace<Double>(dimension: 5, label: "Quinpartite Space 4")
+        let quinpartiteSpace5 = VectorSpace<Double>(dimension: 6, label: "Quinpartite Space 5")
+        
+        
+        let quinpartiteTotalSpace = VectorSpace(tensorProductOf: [quinpartiteSpace1, quinpartiteSpace2, quinpartiteSpace3, quinpartiteSpace4, quinpartiteSpace5], label: "Quinpartite Total Space")
+        
+        let firstThirdFifthSpaces = quinpartiteTotalSpace.createSubspace(spacesToKeep: quinpartiteSpace1, quinpartiteSpace3, quinpartiteSpace5, label: "First, Third and Fifth Spaces of Quinpartite.")
+        
+        XCTAssert(firstThirdFifthSpaces.setofSpaces.count == 3)
+        XCTAssert(firstThirdFifthSpaces.dimension == 48)
+        XCTAssert(firstThirdFifthSpaces.setofSpaces[0].dimension == 2)
+        XCTAssert(firstThirdFifthSpaces.setofSpaces[1].dimension == 4)
+        XCTAssert(firstThirdFifthSpaces.setofSpaces[2].dimension == 6)
+        
+        let secondSpace = quinpartiteTotalSpace.createSubspace(spacesToKeep: quinpartiteSpace2, label: "")
+        XCTAssert(secondSpace == quinpartiteSpace2)
+        XCTAssert(secondSpace.dimension == 3)
+        
+        let firstAndFifthSpaces = quinpartiteTotalSpace.createSubspace(spacesToKeep: quinpartiteSpace1, quinpartiteSpace5, label: "")
+        
+        XCTAssert(firstAndFifthSpaces.setofSpaces.count == 2)
+        XCTAssert(firstAndFifthSpaces.dimension == 12)
+        XCTAssert(firstAndFifthSpaces.setofSpaces[0].dimension == 2)
+        XCTAssert(firstAndFifthSpaces.setofSpaces[1].dimension == 6)
+        
     }
     
     func test_makingDiagonalSparseMatrix() throws {
@@ -373,7 +433,7 @@ final class CoreTests: XCTestCase {
         
         let leftSubSpace = VectorSpace<Double>(dimension: 2, label: "")
         let rightSubSpace = VectorSpace<Double>(dimension: 3, label: "")
-        let fullSpace = VectorSpace<Double>(tensorProductOf: leftSubSpace, rightSubSpace,
+        let fullSpace = VectorSpace<Double>(tensorProductOf: [leftSubSpace, rightSubSpace],
                                             label: "")
         let A = DiagonalSparseMatrix(in: leftSubSpace, diagonals: [0: MatrixDiagonal(dimension: 2, diagIdx: 0, elements: [0:1]),
                                                                    1: MatrixDiagonal(dimension: 2, diagIdx: 1, elements: [0:1])])
@@ -500,6 +560,76 @@ final class CoreTests: XCTestCase {
         
         XCTAssertEqual(slope2, 0.5)
         XCTAssertEqual(intercept2, 1)
+    }
+    
+    func test_partialTraceMatrixTwoQubit() throws {
+        
+        let leftSpace = VectorSpace<Double>(dimension: 2, label: "")
+        let rightSpace = VectorSpace<Double>(dimension: 2, label: "")
+        
+        let totalSpace = VectorSpace(tensorProductOf: [leftSpace, rightSpace], label: "")
+        
+        let densityMatrix1 = Matrix(elements:[Double](repeating: 0.25, count: totalSpace.dimension*totalSpace.dimension),in: totalSpace)
+        
+        let reducedDensityMatrixLeft1 = densityMatrix1.traceInto(subSpace: leftSpace)
+        let reducedDensityMatrixRight1 = densityMatrix1.traceInto(subSpace: rightSpace)
+        
+        XCTAssert(reducedDensityMatrixLeft1.elements == [0.5,0.5,0.5,0.5])
+        XCTAssert(reducedDensityMatrixRight1.elements == [0.5,0.5,0.5,0.5])
+        
+        var densityMatrix2 = Matrix(in: totalSpace)
+        
+        densityMatrix2[0,0] = 0.5
+        densityMatrix2[0,3] = 0.5
+        densityMatrix2[3,0] = 0.5
+        densityMatrix2[3,3] = 0.5
+        
+        let reducedDensityMatrixLeft2 = densityMatrix2.traceInto(subSpace: leftSpace)
+        let reducedDensityMatrixRight2 = densityMatrix2.traceInto(subSpace: rightSpace)
+       
+        XCTAssert(reducedDensityMatrixLeft2.elements == [0.5, 0.0, 0.0, 0.5])
+        XCTAssert(reducedDensityMatrixRight2.elements == [0.5, 0.0, 0.0, 0.5])
+        
+        
+    }
+    
+    func test_partialTraceMatrixThreeQubit() throws {
+        
+        let spaceA = VectorSpace<Double>(dimension: 2, label: "")
+        let spaceB = VectorSpace<Double>(dimension: 2, label: "")
+        let spaceC = VectorSpace<Double>(dimension: 2, label: "")
+        let totalSpace = VectorSpace(tensorProductOf: [spaceA, spaceB, spaceC], label: "")
+        
+        var densityMatrixABC = Matrix(in: totalSpace)
+        //rho = (1/2)*(|GHZ><GHZ| + |W><W|)
+        densityMatrixABC[0,0] = 1.0/4.0
+        densityMatrixABC[0,7] = 1.0/4
+        
+        densityMatrixABC[1,1] = 1.0/6
+        densityMatrixABC[1,2] = 1.0/6
+        densityMatrixABC[1,6] = 1.0/6
+        
+        densityMatrixABC[2,1] = 1.0/6
+        densityMatrixABC[2,2] = 1.0/6
+        densityMatrixABC[2,6] = 1.0/6
+        
+        densityMatrixABC[6,1] = 1.0/6
+        densityMatrixABC[6,2] = 1.0/6
+        densityMatrixABC[6,6] = 1.0/6
+        
+        densityMatrixABC[7,0] = 1.0/4
+        densityMatrixABC[7,7] = 1.0/4
+        
+        //tracing out middle space
+        let spacesAC = totalSpace.createSubspace(spacesToKeep: spaceA, spaceC, label: "")
+        let reducedDensityAC = densityMatrixABC.traceInto(subSpace: spacesAC)
+        
+        let correctElements = [5.0/12, 0.0, 1.0/6, 0, 0, 1.0/6, 0, 0, 1.0/6, 0, 1.0/6, 0, 0, 0, 0, 1.0/4]
+        
+        for i in 0..<correctElements.count {
+            XCTAssertEqual(reducedDensityAC.elements[i], correctElements[i], accuracy: 0.00000001)
+            
+        }
     }
 
     

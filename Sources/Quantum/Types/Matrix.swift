@@ -26,7 +26,7 @@ public struct Matrix<T: Scalar>: VectorType, OperatorType {
         self.elements = elements
         self.space = space
     }
-    init(in space: VectorSpace<T>) {
+    public init(in space: VectorSpace<T>) {
         self.elements = Array(repeating: ScalarField.zero, count: space.dimension * space.dimension)
         self.space = space
     }

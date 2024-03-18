@@ -149,7 +149,7 @@ final class QuantumTests: XCTestCase {
         let sho_index = testSHO_Space.identifier
         let spinSpace = StateSpace(dimension: 2, label: "A spin")
         let spin_index = spinSpace.identifier
-        let spaces = StateSpace(tensorProductOf:  testSHO_Space, spinSpace , label: "test TP")
+        let spaces = StateSpace(tensorProductOf:  [testSHO_Space, spinSpace] , label: "test TP")
 
         let product_index = spaces.identifier
 
@@ -178,7 +178,7 @@ final class QuantumTests: XCTestCase {
 
         let space = StateSpace(dimension: 4, label: "")
         let I = space.identityOperator_diagonalSparse
-        let halfI = 0.5*I
+        let _ = 0.5*I
         let minusi = ComplexReal(real: 0.0, imag: -1)
         
         print(Matrix(from: minusi*I))

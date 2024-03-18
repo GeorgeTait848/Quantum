@@ -62,6 +62,28 @@ public class VectorSpace<T: Scalar>: Hashable, definedOverScalarField {
         }
         return output
     }
+    
+    
+    public func createSubspace(spacesToKeep: VectorSpace<T>..., label: String ,sorted: Bool = false) -> VectorSpace<T> {
+        
+        var sortedSpacesToKeep = spacesToKeep
+        if !sorted {
+            sortedSpacesToKeep = spacesToKeep.sorted(by: {$0.identifier < $1.identifier})
+        }
+        
+        assert(sortedSpacesToKeep != setofSpaces, "Cannot create a subspace which is the total space.")
+        
+        //TODO: check each space in spacesToKeep is a subspace of the totalSpace. For now, assume that it is.
+        if sortedSpacesToKeep.count == 1 {
+            return sortedSpacesToKeep[0]
+        }
+        
+//        TODO: somehow check if the space which is exactly a combination of these spaces already exists, if it does,
+//        return that space. Not sure how this would be done without storing every space which has been defined.
+//        Difficult problem due to the generics, cannot predefine the types of elements of a generic list.
+        return VectorSpace(tensorProductOf: sortedSpacesToKeep, label: label, sorted: true)
+
+    }
 }
 
 // MARK: - Add Tensor product capability
@@ -94,21 +116,6 @@ extension VectorSpace {
         setofSpaces = sortedSpaces
     }
     
-    
-    convenience public init (subSpaceOf totalSpace: VectorSpace<ScalarField>, spacesToKeep: VectorSpace<ScalarField>... , label: String, spacesToKeepIsSorted: Bool = false) {
-        
-        var sortedSpacesToKeep = spacesToKeep
-        if !spacesToKeepIsSorted {
-            sortedSpacesToKeep = spacesToKeep.sorted(by: {$0.identifier < $1.identifier})
-        }
-        
-        assert(sortedSpacesToKeep != totalSpace.setofSpaces, "Cannot trace into a subspace which is the total space.")
-        
-        //TODO: check each space in spacesToKeep is a subspace of the totalSpace. For now, assume that it is.
-        
-        self.init(tensorProductOf: sortedSpacesToKeep , label: label, sorted: true)
-        
-    }
     
     
     

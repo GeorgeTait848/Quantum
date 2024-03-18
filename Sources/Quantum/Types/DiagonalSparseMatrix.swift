@@ -24,22 +24,24 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
         }
         
         set {
+            
             self.diagonals[diagIdx] = newValue
         }
     }
     
-    public subscript (row: Int, col: Int) -> T? {
+    public subscript (row: Int, col: Int) -> T {
         
         get {
             let diagIdx = col - row
             
-            guard let diag = self.diagonals[diagIdx] else { return nil }
-            guard let val = diag[row] else {return nil}
+            guard let diag = self.diagonals[diagIdx] else { return T(0) }
+            guard let val = diag[row] else {return T(0)}
             
             return val
         }
         
         set {
+            if newValue == T(0) {return}
             let diagIdx = col - row
             
             self.diagonals[diagIdx]?.elements[row] = newValue
@@ -112,21 +114,22 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     
     
     public static func * (lhs: DiagonalSparseMatrix<T>, rhs: Vector<T>) -> Vector<T> {
-        
-        var output = Vector(in: lhs.space)
+        assert(lhs.space == rhs.space)
+        var outputElements = [T](repeating: T(0), count: lhs.space.dimension)
         
         for (lhsDiagIdx, lhsDiag) in lhs.diagonals {
             for (row, lhsVal) in lhsDiag.elements {
+                
                 let column = row + lhsDiagIdx
-                if (column >= 0 && column < output.count) {
-                    output[row] = output[row] + lhsVal * rhs[column]
-                }
+                if (column <= 0 || column >= lhs.space.dimension) { continue }
+                
+                outputElements[row] = outputElements[row] + lhsVal * rhs[column]
             }
             
         }
         
         
-        return output
+        return Vector(elements: outputElements, in: lhs.space)
     }
     
     
@@ -219,7 +222,7 @@ public struct MatrixDiagonal<T: Scalar> {
     public typealias ScalarField = T
     public var dimension: Int
     public var diagIdx: Int
-    public var elements: [Int: T]
+    public  var elements: [Int: T]
     
     
     public init(dimension: Int, diagIdx: Int, elements: [Int : T]) {
@@ -411,10 +414,7 @@ public struct MatrixDiagonal<T: Scalar> {
         return output
     }
     
-    
-    
-    
-    
+
     
 }
 
