@@ -343,6 +343,83 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     }
     
     
+    public var identityOperator_sparse: SparseMatrix<ComplexReal> {return makeIdentityMatrixSparse()}
+    public var SigmaZ_sparse: SparseMatrix<ComplexReal> {return makeSigmaZSparse()}
+    public var sigmaPlus_sparse: SparseMatrix<ComplexReal> { return makeSpinRaisingSparse() }
+    public var sigmaMinus_sparse: SparseMatrix<ComplexReal> { return makeSpinLoweringSparse() }
+    public var numberOperator_sparse: SparseMatrix<ComplexReal> { return makeNumberOperatorSparse() }
+    public var annhilationOperator_sparse: SparseMatrix<ComplexReal> { return makeAnnhilationOperatorSparse() }
+    public var creationOperator_sparse: SparseMatrix<ComplexReal> { return makeCreationOperatorSparse() }
+    
+    
+    public func makeIdentityMatrixSparse() -> SparseMatrix<ComplexReal> {
+        var output = SparseMatrix(in: self)
+        for row in 0..<dimension {
+            output.values.append(CoordinateStorage(value: I, row: row, col: row))
+        }
+        return output
+    }
+    
+    public func makeSigmaZSparse() -> SparseMatrix<ComplexReal> {
+        assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
+            
+        var Sz = SparseMatrix<ComplexReal>(in: self)
+        Sz.values.append(CoordinateStorage(value: I, row: 0, col: 0))
+        Sz.values.append(CoordinateStorage(value: -I, row: 1, col: 1))
+        
+        return Sz
+    }
+    
+    public func makeSpinRaisingSparse() -> SparseMatrix<ComplexReal> {
+        assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
+        
+        let S_plus = SparseMatrix(values: [CoordinateStorage(value: I, row: 0, col: 1)], in: self)
+        
+        return S_plus
+    }
+    
+    public func makeSpinLoweringSparse() -> SparseMatrix<ComplexReal> {
+        assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
+        
+        let S_minus = SparseMatrix(values: [CoordinateStorage(value: I, row: 1, col: 0)], in: self )
+        
+        return S_minus
+    }
+    
+    
+    public func makeNumberOperatorSparse() -> SparseMatrix<ComplexReal> {
+        
+        var output = SparseMatrix(in: self)
+        for i in 1..<dimension {
+            output.values.append(CoordinateStorage(value: ComplexReal(real: Double(i)), row: i, col: i))
+        }
+        return output
+    }
+    
+    public func makeAnnhilationOperatorSparse() -> SparseMatrix<ComplexReal> {
+        
+        var output = SparseMatrix(in: self)
+        
+        for i in 0..<dimension-1 {
+            output.values.append(CoordinateStorage(value: ComplexReal(real: Real.sqrt(Real(i))), row: i, col: i+1))
+        }
+        
+        return output
+    }
+    
+    
+    public func makeCreationOperatorSparse() -> SparseMatrix<ComplexReal> {
+        
+        var output = SparseMatrix(in: self)
+        
+        for i in 1..<dimension {
+            output.values.append(CoordinateStorage(value: ComplexReal(real: Real.sqrt(Real(i))), row: i, col: i-1))
+        }
+        
+        return output
+    }
+    
+    
 
 }
 //  Created by M J Everitt on 21/01/2022.
