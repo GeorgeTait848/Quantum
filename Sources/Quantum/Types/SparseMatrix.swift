@@ -52,31 +52,39 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         nonzero_elements_per_row = [Int](repeating: 0, count: matrix.space.dimension)
         row_first_element_offsets = [Int](repeating: -1, count: matrix.space.dimension)
         
-        var current_row_offset = 0
-        var nonzero_elements_in_current_row = 0
-        
         
         for i in 0 ..< rows {
-            
             for j in 0 ..< columns {
-                
+
                 if matrix[i,j] == T(0.0) { continue }
-                    values.append(CoordinateStorage(value: matrix[i,j], row: i, col: j))
-                    nonzero_elements_in_current_row += 1
-                
+                values.append(CoordinateStorage(value: matrix[i,j], row: i, col: j))
             }
-            
-            nonzero_elements_per_row[i] = nonzero_elements_in_current_row
-            
-            if nonzero_elements_in_current_row > 0 {
-                current_row_offset += nonzero_elements_in_current_row
-                row_first_element_offsets[i] = current_row_offset
-            }
-            
-            nonzero_elements_in_current_row = 0
             
         }
         values.sort()
+        
+        var curr_row = 0
+        var prev_row = 0
+        var curr_offset = 0
+        
+        if values[0].row == 0 {
+            row_first_element_offsets[0] = 0
+        }
+        
+        for value in values {
+            
+            curr_row = value.row
+            nonzero_elements_per_row[curr_row] += 1
+            
+            
+            if curr_row == prev_row { curr_offset += 1 }
+            else {
+                row_first_element_offsets[curr_row] = curr_offset
+                prev_row = curr_row
+            }
+        }
+        
+        
     }
     public init (in space: VectorSpace<ScalarField>) {
         rows = space.dimension
