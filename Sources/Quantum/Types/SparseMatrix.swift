@@ -73,7 +73,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
                 row_first_element_offsets[i] = current_row_offset
             }
             
-            var nonzero_elements_in_current_row = 0
+            nonzero_elements_in_current_row = 0
             
         }
         values.sort()
