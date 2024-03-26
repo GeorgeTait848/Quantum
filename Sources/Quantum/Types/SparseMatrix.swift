@@ -41,17 +41,22 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     let rows: Int
     let columns: Int
     public var values: [CoordinateStorage<T>]
+    internal var nonzero_elements_per_row: [Int]
     
     public init(from matrix: Matrix<ScalarField>) {
         rows = matrix.space.dimension
         columns = matrix.space.dimension
         space = matrix.space
         values = []
+        nonzero_elements_per_row = [Int](repeating: 0, count: matrix.space.dimension)
         for i in 0 ..< rows {
+            var nonzero_elements_in_current_row = 0
             for j in 0 ..< columns {
                 if matrix[i,j] != T(0.0) {
                     values.append(CoordinateStorage(value: matrix[i,j], row: i, col: j))
+                    nonzero_elements_in_current_row += 1
                 }
+                nonzero_elements_per_row[i] = nonzero_elements_in_current_row
             }
         }
         values.sort()
@@ -61,6 +66,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         columns = space.dimension
         self.values = []
         self.space = space
+        nonzero_elements_per_row = [Int](repeating: 0, count: space.dimension)
     }
     
     public init (values: [CoordinateStorage<ScalarField>],
@@ -69,6 +75,11 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         columns = space.dimension
         self.values = values.sorted()
         self.space = space
+        
+        nonzero_elements_per_row = [Int](repeating: 0, count: space.dimension)
+        for value in values {
+            nonzero_elements_per_row[value.row] += 1
+        }
     }
     // MARK: Arithmatic
     public static func * (left: Self, right: ScalarField) -> Self {
@@ -227,36 +238,19 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     
     public static func * (lhs: SparseMatrix<ScalarField>,
                           rhs: Vector<ScalarField>) -> Vector<ScalarField> {
-                assert(lhs.columns == rhs.space.dimension, "Index out of range")
-                assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
-        
-                var output = Vector(in: lhs.space)
-        
-                for matrixElement in lhs.values {
-                    let col = matrixElement.col
-                    let row = matrixElement.row
-                    let temp = matrixElement.value * rhs[col]
-                    output[row] = output[row] + temp
-                }
-                return output
-        
-        
-//        guard lhs.space == rhs.space else {
-//            fatalError("Number of columns in the matrix must match the size of the vector.")
-//        }
-//        
-//        var outputElements = [T](repeating: T(0), count: lhs.space.dimension)
+//                assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
 //
-//        DispatchQueue.concurrentPerform(iterations: lhs.values.count) { index in
-//            
-//            let row = lhs.values[index].row
-//            let col = lhs.values[index].col
-//            let value = lhs.values[index].value
-//            outputElements[row] = outputElements[row] + value * rhs[col]
-//                
-//               
-//            }
-//        return Vector(elements: outputElements, in: lhs.space)
+//                var output = Vector(in: lhs.space)
+//
+//                for matrixElement in lhs.values {
+//                    let col = matrixElement.col
+//                    let row = matrixElement.row
+//                    let temp = matrixElement.value * rhs[col]
+//                    output[row] = output[row] + temp
+//                }
+//                return output
+        
+        return lhs.parallelVectorMultiply(vector: rhs)
         
         }
     
@@ -268,27 +262,24 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         }
         
         var outputElements = [T](repeating: T(0), count: space.dimension)
-        let dispatchGroup = DispatchGroup() // Initialize dispatch group
         
-        DispatchQueue.concurrentPerform(iterations: values.count) { index in
-            let row = values[index].row
-            let col = values[index].col
-            let value = values[index].value
+        DispatchQueue.concurrentPerform(iterations: space.dimension) { row in
             
-            // Enter the dispatch group before starting the task
-            dispatchGroup.enter()
+            if nonzero_elements_per_row[row] == 0 { return }
             
-            DispatchQueue.global(qos: .userInteractive).async {
-                // Perform the matrix-vector multiplication
-                outputElements[row] = outputElements[row] + value * vector[col]
-                
-                // Leave the dispatch group after completing the task
-                dispatchGroup.leave()
+            var start_idx = 0
+            
+            for i in 0..<row {
+                start_idx += nonzero_elements_per_row[i]
             }
+            
+            let end_idx = start_idx + nonzero_elements_per_row[row]
+            
+            for i in start_idx..<end_idx {
+                outputElements[row] = outputElements[row] + values[i].value * vector[values[i].col]
+            }
+         
         }
-        
-        // Wait for all tasks to complete
-        dispatchGroup.wait()
         
         return Vector(elements: outputElements, in: space)
     }

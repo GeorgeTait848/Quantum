@@ -242,6 +242,26 @@ final class CoreTests: XCTestCase {
         XCTAssert(Complex(real: 14.0, imag: 0.0) == vC.innerProduct(dualVector: vC) )
     }
     
+    func test_sparse_concurrent_vec_mult() throws {
+        
+        let space = StateSpace(dimension: 1000, label: "test")
+        let identity_sparse = space.identityOperator_sparse
+        let v = Vector(elements: [ComplexReal](repeating: ComplexReal(real: 1.0), count: space.dimension), in: space)
+        
+        XCTAssertEqual(identity_sparse.parallelVectorMultiply(vector: v), v)
+        
+        let number_operator_sparse = space.numberOperator_sparse
+        
+        var numberOpTimesV_elements = [ComplexReal](repeating: ComplexReal(real: 0), count: space.dimension)
+        
+        for i in 1..<numberOpTimesV_elements.count {
+            numberOpTimesV_elements[i] = ComplexReal(real: Double(i))
+        }
+        
+        XCTAssertEqual(number_operator_sparse.parallelVectorMultiply(vector: v).elements, numberOpTimesV_elements)
+    }
+    
+    
     func test_tensorProduct() throws {
         let space1 = VectorSpace<Double>(dimension: 2, label: "test Space 1")
         let matrix1 = Matrix(elements: [1.0,2.0,3.0,4.0], in: space1)

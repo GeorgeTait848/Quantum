@@ -277,7 +277,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         var mainDiag = MatrixDiagonal<ComplexReal>(dimension: dimension, diagIdx: 0, elements: [:])
         
         for i in 0..<dimension {
-            mainDiag[i] = I
+            mainDiag[i] = ComplexReal(real: 1)
         }
         
         return DiagonalSparseMatrix(in: self, diagonals: [0: mainDiag])
@@ -286,7 +286,11 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSigmaZDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
             
-        let Sz = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [0: MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 0, elements: [0:I, 1:-I])])
+        let Sz = DiagonalSparseMatrix<ComplexReal>(in: self,
+                                                   diagonals: [0: MatrixDiagonal<ComplexReal>(dimension: 2,
+                                                                                            diagIdx: 0,
+                                                                                            elements: [0:ComplexReal(real: 1),
+                                                                                                       1:ComplexReal(real: -1)])])
         
         return Sz
     }
@@ -294,7 +298,10 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSpinRaisingDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
-        let S_plus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 1, elements: [0:I])])
+        let S_plus = DiagonalSparseMatrix<ComplexReal>(in: self,
+                                                       diagonals: [1:
+                                                                    MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: 1,
+                                                                                                elements: [0:ComplexReal(real: 1)])])
         
         return S_plus
     }
@@ -302,7 +309,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSpinLoweringDiagonalSparse() -> DiagonalSparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
-        let S_minus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [-1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: -1, elements: [1:I])])
+        let S_minus = DiagonalSparseMatrix<ComplexReal>(in: self, diagonals: [-1 : MatrixDiagonal<ComplexReal>(dimension: 2, diagIdx: -1, elements: [1:ComplexReal(real: 1)])])
         
         return S_minus
     }
@@ -355,7 +362,8 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeIdentityMatrixSparse() -> SparseMatrix<ComplexReal> {
         var output = SparseMatrix(in: self)
         for row in 0..<dimension {
-            output.values.append(CoordinateStorage(value: I, row: row, col: row))
+            output.values.append(CoordinateStorage(value: ComplexReal(real: 1), row: row, col: row))
+            output.nonzero_elements_per_row[row] = 1
         }
         return output
     }
@@ -364,8 +372,10 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
             
         var Sz = SparseMatrix<ComplexReal>(in: self)
-        Sz.values.append(CoordinateStorage(value: I, row: 0, col: 0))
-        Sz.values.append(CoordinateStorage(value: -I, row: 1, col: 1))
+        Sz.values.append(CoordinateStorage(value: ComplexReal(real: 1), row: 0, col: 0))
+        Sz.values.append(CoordinateStorage(value: ComplexReal(real: -1), row: 1, col: 1))
+        Sz.nonzero_elements_per_row[0] = 1
+        Sz.nonzero_elements_per_row[1] = 1
         
         return Sz
     }
@@ -373,16 +383,16 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSpinRaisingSparse() -> SparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
-        let S_plus = SparseMatrix(values: [CoordinateStorage(value: I, row: 0, col: 1)], in: self)
-        
+        var S_plus = SparseMatrix(values: [CoordinateStorage(value: ComplexReal(real: 1), row: 0, col: 1)], in: self)
+        S_plus.nonzero_elements_per_row[0] = 1
         return S_plus
     }
     
     public func makeSpinLoweringSparse() -> SparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
-        let S_minus = SparseMatrix(values: [CoordinateStorage(value: I, row: 1, col: 0)], in: self )
-        
+        var S_minus = SparseMatrix(values: [CoordinateStorage(value: ComplexReal(real: 1), row: 1, col: 0)], in: self )
+        S_minus.nonzero_elements_per_row[1] = 1
         return S_minus
     }
     
@@ -392,6 +402,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         var output = SparseMatrix(in: self)
         for i in 1..<dimension {
             output.values.append(CoordinateStorage(value: ComplexReal(real: Double(i)), row: i, col: i))
+            output.nonzero_elements_per_row[i] = 1
         }
         return output
     }
@@ -402,6 +413,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         
         for i in 0..<dimension-1 {
             output.values.append(CoordinateStorage(value: ComplexReal(real: Real.sqrt(Real(i))), row: i, col: i+1))
+            output.nonzero_elements_per_row[i] = 1
         }
         
         return output
@@ -414,6 +426,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         
         for i in 1..<dimension {
             output.values.append(CoordinateStorage(value: ComplexReal(real: Real.sqrt(Real(i))), row: i, col: i-1))
+            output.nonzero_elements_per_row[i] = 1
         }
         
         return output
