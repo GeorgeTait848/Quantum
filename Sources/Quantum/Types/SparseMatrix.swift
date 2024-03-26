@@ -42,6 +42,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     let columns: Int
     public var values: [CoordinateStorage<T>]
     internal var nonzero_elements_per_row: [Int]
+    internal var row_first_element_offsets: [Int]
     
     public init(from matrix: Matrix<ScalarField>) {
         rows = matrix.space.dimension
@@ -49,15 +50,31 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         space = matrix.space
         values = []
         nonzero_elements_per_row = [Int](repeating: 0, count: matrix.space.dimension)
+        row_first_element_offsets = [Int](repeating: -1, count: matrix.space.dimension)
+        
+        var current_row_offset = 0
+        var nonzero_elements_in_current_row = 0
+        
+        
         for i in 0 ..< rows {
-            var nonzero_elements_in_current_row = 0
+            
             for j in 0 ..< columns {
-                if matrix[i,j] != T(0.0) {
+                
+                if matrix[i,j] == T(0.0) { continue }
                     values.append(CoordinateStorage(value: matrix[i,j], row: i, col: j))
                     nonzero_elements_in_current_row += 1
-                }
-                nonzero_elements_per_row[i] = nonzero_elements_in_current_row
+                
             }
+            
+            nonzero_elements_per_row[i] = nonzero_elements_in_current_row
+            
+            if nonzero_elements_in_current_row > 0 {
+                current_row_offset += nonzero_elements_in_current_row
+                row_first_element_offsets[i] = current_row_offset
+            }
+            
+            var nonzero_elements_in_current_row = 0
+            
         }
         values.sort()
     }
@@ -67,18 +84,47 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         self.values = []
         self.space = space
         nonzero_elements_per_row = [Int](repeating: 0, count: space.dimension)
+        row_first_element_offsets = [Int](repeating: -1, count: space.dimension)
+        
     }
     
     public init (values: [CoordinateStorage<ScalarField>],
                  in space: VectorSpace<ScalarField>) {
+        
+        
         rows = space.dimension
         columns = space.dimension
         self.values = values.sorted()
         self.space = space
         
         nonzero_elements_per_row = [Int](repeating: 0, count: space.dimension)
+        row_first_element_offsets = [Int](repeating: -1, count: space.dimension)
+        
+        var curr_row = 0
+        var prev_row = 0
+        var curr_offset = 0
+        
+        if values[0].row == 0 {
+            row_first_element_offsets[0] = 0
+        }
+        
         for value in values {
-            nonzero_elements_per_row[value.row] += 1
+            
+            curr_row = value.row
+            nonzero_elements_per_row[curr_row] += 1
+            
+            
+            if curr_row == prev_row {
+                curr_offset += 1
+                
+            }
+            else {
+                row_first_element_offsets[curr_row] = curr_offset
+                prev_row = curr_row
+            }
+            
+            
+            
         }
     }
     // MARK: Arithmatic
@@ -265,14 +311,8 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         
         DispatchQueue.concurrentPerform(iterations: space.dimension) { row in
             
-            if nonzero_elements_per_row[row] == 0 { return }
-            
-            var start_idx = 0
-            
-            for i in 0..<row {
-                start_idx += nonzero_elements_per_row[i]
-            }
-            
+            let start_idx = row_first_element_offsets[row]
+            if start_idx == -1 { return }
             let end_idx = start_idx + nonzero_elements_per_row[row]
             
             for i in start_idx..<end_idx {

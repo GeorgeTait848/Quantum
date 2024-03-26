@@ -364,6 +364,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         for row in 0..<dimension {
             output.values.append(CoordinateStorage(value: ComplexReal(real: 1), row: row, col: row))
             output.nonzero_elements_per_row[row] = 1
+            output.row_first_element_offsets[row] = row
         }
         return output
     }
@@ -371,11 +372,10 @@ public class StateSpace: VectorSpace<Complex<Real>> {
     public func makeSigmaZSparse() -> SparseMatrix<ComplexReal> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
             
-        var Sz = SparseMatrix<ComplexReal>(in: self)
-        Sz.values.append(CoordinateStorage(value: ComplexReal(real: 1), row: 0, col: 0))
-        Sz.values.append(CoordinateStorage(value: ComplexReal(real: -1), row: 1, col: 1))
-        Sz.nonzero_elements_per_row[0] = 1
-        Sz.nonzero_elements_per_row[1] = 1
+        var Sz = SparseMatrix<ComplexReal>(values: [CoordinateStorage(value: ComplexReal(real: 1), row: 0, col: 0),
+                                                    CoordinateStorage(value: ComplexReal(real: -1), row: 1, col: 1)],
+                                           in: self)
+
         
         return Sz
     }
@@ -384,7 +384,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
         var S_plus = SparseMatrix(values: [CoordinateStorage(value: ComplexReal(real: 1), row: 0, col: 1)], in: self)
-        S_plus.nonzero_elements_per_row[0] = 1
+
         return S_plus
     }
     
@@ -392,7 +392,6 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         assert(self.dimension == 2, "Dimension should be 2 but is \(self.dimension)")
         
         var S_minus = SparseMatrix(values: [CoordinateStorage(value: ComplexReal(real: 1), row: 1, col: 0)], in: self )
-        S_minus.nonzero_elements_per_row[1] = 1
         return S_minus
     }
     
@@ -403,6 +402,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         for i in 1..<dimension {
             output.values.append(CoordinateStorage(value: ComplexReal(real: Double(i)), row: i, col: i))
             output.nonzero_elements_per_row[i] = 1
+            output.row_first_element_offsets[i] = i-1
         }
         return output
     }
@@ -414,6 +414,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         for i in 0..<dimension-1 {
             output.values.append(CoordinateStorage(value: ComplexReal(real: Real.sqrt(Real(i))), row: i, col: i+1))
             output.nonzero_elements_per_row[i] = 1
+            output.row_first_element_offsets[i] = i
         }
         
         return output
@@ -427,6 +428,7 @@ public class StateSpace: VectorSpace<Complex<Real>> {
         for i in 1..<dimension {
             output.values.append(CoordinateStorage(value: ComplexReal(real: Real.sqrt(Real(i))), row: i, col: i-1))
             output.nonzero_elements_per_row[i] = 1
+            output.row_first_element_offsets[i] = i-1
         }
         
         return output
