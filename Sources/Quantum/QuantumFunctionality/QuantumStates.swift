@@ -7,34 +7,32 @@
  import Foundation
 
 extension StateSpace {
-    public func makeCoherentState(alpha: ScalarField) -> StateVector {
+    public func makeCoherentState(alpha: Complex) -> Vector {
         
         var output = Vector(in: self)
         
-        typealias R = ScalarField.ScalarField
-        
-        let prefactor = R.exp( -(alpha.modulus * alpha.modulus / R(2)) )
+        let prefactor = exp( -(alpha.modulus * alpha.modulus / 2) )
 
-        output[0] = ScalarField(prefactor)
+        output[0] = Complex(real: prefactor)
         for n in 1 ..< self.dimension {
             // avoid computing n! as this can get problematic
-            output[n] = output[n-1] * alpha / R.sqrt(R(n))
+            output[n] = output[n-1] * alpha / sqrt(Double(n))
         }
         return output
     }
     
-    public func makeNumberState(_ n: Int) -> StateVector {
+    public func makeNumberState(_ n: Int) -> Vector {
         var output = Vector(in: self)
-        output[n] = ComplexReal(1)
+        output[n] = Complex(1)
         return output
     }
     
-    public func makeVector(from input: [Real]) -> StateVector {
-        let output = input.map( { ComplexReal($0) } )
+    public func makeVector(from input: [Double]) -> Vector {
+        let output = input.map( { Complex($0) } )
         return Vector(elements: output, in: self)
     }
     
-    public func makeVector(from input: [ComplexReal]) -> StateVector {
+    public func makeVector(from input: [Complex]) -> Vector {
         return Vector(elements: input, in: self)
     }
 

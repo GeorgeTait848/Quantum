@@ -9,8 +9,8 @@ import XCTest
 @testable import Quantum
 
 final class CoreTests: XCTestCase {
-    typealias C = Complex<Double>
-    typealias V = Vector<C>
+    typealias C = Complex
+    typealias V = Vector
     
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -56,12 +56,12 @@ final class CoreTests: XCTestCase {
     func test_VectorBasics() throws {
         let i = C( real: 0.0, imag: 1.0 )
         
-        let space1 = VectorSpace<C>(dimension: 2, label: "test space 1")
+        let space1 = VectorSpace(dimension: 2, label: "test space 1")
         let u1 = V( elements: [ 3.0 + 2.0 * i , -1.0 + 4.0 * i ] , in: space1)
         let v1 = V( elements: [ -3.0 - 2.0 * i , 1.0 - 4.0 * i ] , in: space1)
-        let zero1 = V(elements: [ C.zero, C.zero ] , in: space1)
+        let zero1 = V(elements: [ C(real: 0), C(real: 0) ] , in: space1)
         
-        let space2 = VectorSpace<C>(dimension: 2, label: "test space 2")
+        let space2 = VectorSpace(dimension: 2, label: "test space 2")
         let u2 = V( elements: [ 3.0 + 2.0 * i , -1.0 + 4.0 * i ] , in: space2)
         
         XCTAssertEqual( u1 + v1 , zero1 )
@@ -81,58 +81,64 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual( u1 + u1 , ( u1 * C(4.0) ) / C(2.0) )
         XCTAssertNotEqual( u1 + u1 , ( u1 * C(4.0) ) / C(3.0) )
         XCTAssertEqual( u1 + u1 , ( 4.0 * u1 ) / 2 ) // also sching int and double
-        XCTAssertEqual( u1 + u1 , ( u1 * 4 ) / 2 )
-        XCTAssertNotEqual( u1 + u1 , ( u1 * 4 ) / 3.0 )
-        XCTAssertEqual( u1 + u1 , ( 4 * u1 ) / 2 )
-        XCTAssertEqual( u1 + u1 , ( u1 * 4 ) / 2 )
-        XCTAssertNotEqual( u1 + u1 , ( u1 * 4 ) / 3 )
+        XCTAssertEqual( u1 + u1 , ( u1 * 4.0 ) / 2.0 )
+        XCTAssertNotEqual( u1 + u1 , ( u1 * 4.0 ) / 3.0 )
+        XCTAssertEqual( u1 + u1 , ( 4.0 * u1 ) / 2.0 )
+        XCTAssertEqual( u1 + u1 , ( u1 * 4.0 ) / 2.0 )
+        XCTAssertNotEqual( u1 + u1 , ( u1 * 4.0 ) / 3.0 )
         
     }
     
     func test_identity_operator() throws {
-        let space = VectorSpace<Double>(dimension: 3, label: "test Space")
+        let space = VectorSpace(dimension: 3, label: "test Space")
+        
+        var elem = [Complex](repeating: Complex(real: 0.0), count: space.dimension * space.dimension)
+        
+        for i in 0..<space.dimension {
+            elem[i * space.dimension + i] = Complex(real: 1.0)
+        }
         XCTAssert(
-            space.identityOperator.elements == [1.0,0.0,0.0,
-                                                0.0,1.0,0.0,
-                                                0.0,0.0,1.0]
+            space.identityOperator.elements == elem
         )
     }
     
     func test_matrixSubscript() throws {
-        let space = VectorSpace<Double>(dimension: 2, label: "test Space")
+        let space = VectorSpace(dimension: 2, label: "test Space")
         var matrix = Matrix(in: space)
-        matrix[0,0] = 1.0
-        matrix[0,1] = 2.0
-        matrix[1,0] = 3.0
-        matrix[1,1] = 4.0
-        XCTAssertTrue( matrix.elements == [1.0,2.0,3.0,4.0])
+        matrix[0,0] = Complex(1.0)
+        matrix[0,1] = Complex(2.0)
+        matrix[1,0] = Complex(3.0)
+        matrix[1,1] = Complex(4.0)
+        
+        let elems = [Complex(1.0), Complex(2.0), Complex(3.0), Complex(4.0)]
+        XCTAssertTrue( matrix.elements == elems)
     }
     
     func test_matrixTimesVector() throws {
-        let space = VectorSpace<Double>(dimension: 2, label: "test Space")
+        let space = VectorSpace(dimension: 2, label: "test Space")
         var matrix = Matrix(in: space)
-        matrix[0,0] = 1.0
-        matrix[0,1] = 2.0
-        matrix[1,0] = 3.0
-        matrix[1,1] = 4.0
+        matrix[0,0] = Complex(1.0)
+        matrix[0,1] = Complex(2.0)
+        matrix[1,0] = Complex(3.0)
+        matrix[1,1] = Complex(4.0)
         var vector = Vector(in: space)
-        vector[0] = 5.0
-        vector[1] = 6.0
+        vector[0] = Complex(5.0)
+        vector[1] = Complex(6.0)
         
-        XCTAssertTrue( (matrix * vector).elements == [17.0,39.0] )
+        XCTAssertTrue( (matrix * vector).elements == [Complex(17.0),Complex(39.0)] )
     }
     
     
     func test_square_matrix_multiplication() throws {
         
-        let space = VectorSpace<Double>(dimension: 2, label: "MatMult test space")
+        let space = VectorSpace(dimension: 2, label: "MatMult test space")
         
-        let A = Matrix(elements: [1,2,3,4], in: space)
-        let B = Matrix(elements: [5,6,7,8], in: space)
+        let A = Matrix(elements: [Complex(1.0), Complex(2.0), Complex(3.0), Complex(4.0)], in: space)
+        let B = Matrix(elements: [Complex(5.0), Complex(6.0), Complex(7.0), Complex(8.0)], in: space)
         
         let C = A*B
         
-        XCTAssertEqual(C.elements, [19,22,43,50])
+        XCTAssertEqual(C.elements, [Complex(19),Complex(22),Complex(43),Complex(50)])
         
         
         
@@ -141,20 +147,25 @@ final class CoreTests: XCTestCase {
     
     func test_matrix_approximateEquals() throws {
         let i = C( real: 0.0, imag: 1.0 )
-        let space = VectorSpace<Double>(dimension: 2, label: "test")
+        let space = VectorSpace(dimension: 2, label: "test")
         let TINY = 1e-6
-        let A = Matrix(elements: [1.0,2.0,3.0,-4.0], in: space)
-        let B = Matrix(elements: [1.0,2.0+0.5 * TINY,3.0,-4.0], in: space)
-        let C = Matrix(elements: [1.0,2.0 + 2.0 * TINY,3.0,-4.0], in: space)
+        let A = Matrix(elements: [Complex(1.0), Complex(2.0), Complex(3.0), Complex(-4.0)], in: space)
+        let B = Matrix(elements: [Complex(1.0),Complex(2.0+0.5 * TINY),Complex(3.0),Complex(-4.0)], in: space)
+        let C = Matrix(elements: [Complex(1.0),Complex(2.0 + TINY),Complex(3.0),Complex(-4.0)], in: space)
         XCTAssert( (A =~= B) == true)
         XCTAssert( (A =~= C) == false)
         
-        let spaceC = VectorSpace<Complex<Double>>(dimension: 2, label: "test")
-        let Ac = Matrix(elements: [i,Complex.one,Complex.zero,Complex.one],
+        let spaceC = VectorSpace(dimension: 2, label: "test")
+        let complexOne = Complex(1)
+        let complexZero = Complex(0)
+        
+        let Ac = Matrix(elements: [i,complexOne,complexZero,complexOne],
                         in: spaceC)
-        let Bc = Matrix(elements: [i,Complex.one + 0.5 * TINY,Complex.zero,Complex.one],
+        
+        let Bc = Matrix(elements: [i, complexOne + 0.5 * TINY, complexZero, complexOne],
                         in: spaceC)
-        let Cc = Matrix(elements: [i,Complex.one + 2.0 * TINY,Complex.zero,Complex.one],
+        
+        let Cc = Matrix(elements: [i, complexOne + 2.0 * TINY, complexZero, complexOne],
                         in: spaceC)
         XCTAssert( (Ac =~= Bc) == true)
         XCTAssert( (Ac =~= Cc) == false)
@@ -162,7 +173,7 @@ final class CoreTests: XCTestCase {
     
     func test_matrix_TransposeAndAdjoint() throws {
         let i = C( real: 0.0, imag: 1.0 )
-        let spaceC = VectorSpace<Complex<Double>>(dimension: 2, label: "test")
+        let spaceC = VectorSpace(dimension: 2, label: "test")
         let A = Matrix(elements: [1 + i, 2 + 2 * i,
                                   3 - i, i ],
                        in: spaceC)
@@ -178,14 +189,14 @@ final class CoreTests: XCTestCase {
     
     // MARK: - Sparse Tests (adding spartse to make integration faster)
     func test_sparse_creation_and_equals() throws {
-        let cs1 = CoordinateStorage<Double>(value: 3.0, row: 1, col: 2)
-        let cs2 = CoordinateStorage<Double>(value: 6.0, row: 1, col: 2)
+        let cs1 = CoordinateStorage(value: 3.0, row: 1, col: 2)
+        let cs2 = CoordinateStorage(value: 6.0, row: 1, col: 2)
         XCTAssert(cs1 != cs2)
-        let cs3 = CoordinateStorage<Double>(value: 3.0, row: 2, col: 2)
+        let cs3 = CoordinateStorage(value: 3.0, row: 2, col: 2)
         XCTAssert(cs1 != cs3)
-        let cs4 = CoordinateStorage<Double>(value: 3.0, row: 1, col: 1)
+        let cs4 = CoordinateStorage(value: 3.0, row: 1, col: 1)
         XCTAssert(cs1 != cs4)
-        let cs5 = CoordinateStorage<Double>(value: 3.0, row: 1, col: 2)
+        let cs5 = CoordinateStorage(value: 3.0, row: 1, col: 2)
         XCTAssert(cs1 == cs5)
         XCTAssert( (cs1 * 2.0 == cs2), "not ClosedUnderScalarFieldMultiplication" )
         XCTAssert(cs1 < cs3)
@@ -193,7 +204,7 @@ final class CoreTests: XCTestCase {
     }
     
     func test_makingSparseMatrix() throws {
-        let space = VectorSpace<Double>(dimension: 3, label: "test Space")
+        let space = VectorSpace(dimension: 3, label: "test Space")
         let n = Matrix(elements: [0.0, 0.0, 0.0,
                                   0.0, 1.0, 0.0,
                                   0.0, 0.0, 2.0], in: space)
@@ -203,23 +214,19 @@ final class CoreTests: XCTestCase {
         XCTAssert(sparse_n.values[0] == CoordinateStorage(value: 1.0, row: 1, col: 1))
         XCTAssert(sparse_n.values[1] == CoordinateStorage(value: 2.0, row: 2, col: 2))
         XCTAssert(Matrix(fromSparse: sparse_n) == n)
-        let a = Matrix<Double>(elements: [0.0, 1.0,  0.0,
+        let a = Matrix(elements: [0.0, 1.0,  0.0,
                                           0.0 , 0.0, sqrt(2.0),
                                           0.0 , 0.0, 0.0], in: space)
-        let sparse_a = SparseMatrix<Double>(from: a)
+        let sparse_a = SparseMatrix(from: a)
         
         let apn = a + n
         
         let sparse_apn = sparse_a + sparse_n
-        
         XCTAssert(Matrix(fromSparse: sparse_apn) == apn)
         
         let v = Vector(elements: [1.0,2.0,3.0], in: space)
         
         XCTAssert( apn * v == sparse_apn * v )
-        XCTAssert(apn * v == sparse_apn.parallelVectorMultiply(vector: v))
-//        print(apn * v)
-//        print(sparse_apn.multiply(vector: v))
         XCTAssert( Matrix(fromSparse: 2.0 * sparse_apn) == 2.0 * apn)
         XCTAssert( Matrix(fromSparse: sparse_apn * 2.0) == 2.0 * apn)
         XCTAssert( Matrix(fromSparse: sparse_apn * 2.0) == apn * 2.0)
@@ -234,38 +241,19 @@ final class CoreTests: XCTestCase {
         
         let apnC = aC + nC
         let sparse_apnC = sparse_aC + sparse_nC
-        XCTAssert(MatrixOperator(fromSparse: sparse_apnC) == apnC)
+        XCTAssert(Matrix(fromSparse: sparse_apnC) == apnC)
         
         // check correct inner product is used if Has_Conjugate
-        XCTAssert(v.innerProduct(dualVector: v) == 14.0)
-        let vC = Vector(elements: makeAComplexArray([1.0,2.0,3.0]), in: spaceC)
+        XCTAssert(v.innerProduct(dualVector: v) == Complex(14))
+        let vC = Vector(elements: [1.0,2.0,3.0], in: spaceC)
         XCTAssert(Complex(real: 14.0, imag: 0.0) == vC.innerProduct(dualVector: vC) )
-    }
-    
-    func test_sparse_concurrent_vec_mult() throws {
-        
-        let space = StateSpace(dimension: 1000, label: "test")
-        let identity_sparse = space.identityOperator_sparse
-        let v = Vector(elements: [ComplexReal](repeating: ComplexReal(real: 1.0), count: space.dimension), in: space)
-        
-        XCTAssertEqual(identity_sparse.parallelVectorMultiply(vector: v), v)
-        
-        let number_operator_sparse = space.numberOperator_sparse
-        
-        var numberOpTimesV_elements = [ComplexReal](repeating: ComplexReal(real: 0), count: space.dimension)
-        
-        for i in 1..<numberOpTimesV_elements.count {
-            numberOpTimesV_elements[i] = ComplexReal(real: Double(i))
-        }
-        
-        XCTAssertEqual(number_operator_sparse.parallelVectorMultiply(vector: v).elements, numberOpTimesV_elements)
     }
     
     
     func test_tensorProduct() throws {
-        let space1 = VectorSpace<Double>(dimension: 2, label: "test Space 1")
+        let space1 = VectorSpace(dimension: 2, label: "test Space 1")
         let matrix1 = Matrix(elements: [1.0,2.0,3.0,4.0], in: space1)
-        let space2 = VectorSpace<Double>(dimension: 2, label: "test Space 2")
+        let space2 = VectorSpace(dimension: 2, label: "test Space 2")
         let matrix2 = Matrix(elements: [0.0,5.0,6.0,7.0], in: space2)
         let totalSpace = VectorSpace(tensorProductOf: [space1, space2], label: "TP space")
         let bigMatrix = totalSpace.tensorProduct(of: matrix1, with: matrix2)
@@ -273,22 +261,8 @@ final class CoreTests: XCTestCase {
         XCTAssertTrue(bigMatrix.elements == [ 0.0, 5.0 , 0.0  , 10.0 ,
                                               6.0, 7.0 , 12.0 , 14.0,
                                               0.0, 15.0, 0.0  , 20.0,
-                                              18.0, 21.0,24.0  , 28.0] )
+                                              18.0, 21.0,24.0  , 28.0].map{Complex($0)} )
     }
-    
-    
-//    func testSparseMatrixTimesVectorParallel() throws {
-//        let space = StateSpace(dimension: 1000, label: "")
-//        let a = space.creationOperator + space.identityOperator + space.annihilationOperator
-//        let a_sparse = SparseMatrix(from: a)
-//
-//        let v = space.makeCoherentState(alpha: ComplexReal(real: 1.0))
-//
-//        let av = a_sparse.parallelVectorMultiply(vector: v)
-//        print(av.elements[0...10])
-//        print((a*v).elements[0...10])
-//        XCTAssert( a*v == a_sparse.parallelVectorMultiply(vector: v))
-//    }
     
     
     func testParallelWrite() throws {
@@ -305,10 +279,10 @@ final class CoreTests: XCTestCase {
     
     func test_subspaceOfTotalSpaceInit() throws {
         
-        let twoQubitLeftSpace = VectorSpace<Double>(dimension: 2, label: "two qubit left")
-        let twoQubitRightSpace = VectorSpace<Double>(dimension: 2, label: "two qubit right")
+        let twoQubitLeftSpace = VectorSpace(dimension: 2, label: "two qubit left")
+        let twoQubitRightSpace = VectorSpace(dimension: 2, label: "two qubit right")
         
-        let twoQubitTotalSpace = VectorSpace<Double>(tensorProductOf: [twoQubitLeftSpace, twoQubitRightSpace], label: "")
+        let twoQubitTotalSpace = VectorSpace(tensorProductOf: [twoQubitLeftSpace, twoQubitRightSpace], label: "")
         
         let twoQubitSubspace1 = twoQubitTotalSpace.createSubspace(spacesToKeep: twoQubitLeftSpace, label: "")
         XCTAssert(twoQubitSubspace1 == twoQubitLeftSpace)
@@ -320,8 +294,8 @@ final class CoreTests: XCTestCase {
         XCTAssert(twoQubitSubspace2.dimension == 2)
         
         
-        let JCSpinSpace = VectorSpace<Double>(dimension: 2, label: "JC Spin Space")
-        let JCFieldSpace = VectorSpace<Double>(dimension: 30, label: "JC Field Space")
+        let JCSpinSpace = VectorSpace(dimension: 2, label: "JC Spin Space")
+        let JCFieldSpace = VectorSpace(dimension: 30, label: "JC Field Space")
         
         let JCTotalSpace = VectorSpace(tensorProductOf: [JCSpinSpace, JCFieldSpace], label: "JC Total Space")
         
@@ -333,11 +307,11 @@ final class CoreTests: XCTestCase {
         XCTAssert(JCSubSpace2 == JCFieldSpace)
         XCTAssert(JCSubSpace2.dimension == 30)
         
-        let quinpartiteSpace1 = VectorSpace<Double>(dimension: 2, label: "Quinpartite Space 1")
-        let quinpartiteSpace2 = VectorSpace<Double>(dimension: 3, label: "Quinpartite Space 2")
-        let quinpartiteSpace3 = VectorSpace<Double>(dimension: 4, label: "Quinpartite Space 3")
-        let quinpartiteSpace4 = VectorSpace<Double>(dimension: 5, label: "Quinpartite Space 4")
-        let quinpartiteSpace5 = VectorSpace<Double>(dimension: 6, label: "Quinpartite Space 5")
+        let quinpartiteSpace1 = VectorSpace(dimension: 2, label: "Quinpartite Space 1")
+        let quinpartiteSpace2 = VectorSpace(dimension: 3, label: "Quinpartite Space 2")
+        let quinpartiteSpace3 = VectorSpace(dimension: 4, label: "Quinpartite Space 3")
+        let quinpartiteSpace4 = VectorSpace(dimension: 5, label: "Quinpartite Space 4")
+        let quinpartiteSpace5 = VectorSpace(dimension: 6, label: "Quinpartite Space 5")
         
         
         let quinpartiteTotalSpace = VectorSpace(tensorProductOf: [quinpartiteSpace1, quinpartiteSpace2, quinpartiteSpace3, quinpartiteSpace4, quinpartiteSpace5], label: "Quinpartite Total Space")
@@ -365,81 +339,80 @@ final class CoreTests: XCTestCase {
     
     func test_makingDiagonalSparseMatrix() throws {
         
-        let testSpace = VectorSpace<Double>(dimension: 4, label: "")
+        let testSpace = VectorSpace(dimension: 4, label: "")
         
-        let denseMatrix = Matrix<Double>(elements: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
+        let denseMatrix = Matrix(elements: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
         
         let diagonalSparse = DiagonalSparseMatrix(from: denseMatrix)
         
         XCTAssertEqual(diagonalSparse.space, testSpace)
-        XCTAssertEqual(diagonalSparse.diagonals[-3]!.elements, [3:13])
-        XCTAssertEqual(diagonalSparse.diagonals[-2]!.elements, [2:9, 3:14])
-        XCTAssertEqual(diagonalSparse.diagonals[-1]!.elements, [1:5, 2:10, 3:15])
-        XCTAssertEqual(diagonalSparse.diagonals[0]!.elements, [0:1, 1:6, 2:11, 3:16])
-        XCTAssertEqual(diagonalSparse.diagonals[1]!.elements, [0:2, 1:7, 2:12])
-        XCTAssertEqual(diagonalSparse.diagonals[2]!.elements, [0:3, 1:8])
-        XCTAssertEqual(diagonalSparse.diagonals[3]!.elements, [0:4])
+        XCTAssertEqual(diagonalSparse.diagonals[-3]!.elements, [3:Complex(13)])
+        XCTAssertEqual(diagonalSparse.diagonals[-2]!.elements, [2:Complex(9), 3: Complex(14)])
+        XCTAssertEqual(diagonalSparse.diagonals[-1]!.elements, [1:5, 2:10, 3:15].mapValues{Complex($0)})
+        XCTAssertEqual(diagonalSparse.diagonals[0]!.elements, [0:1, 1:6, 2:11, 3:16].mapValues{Complex($0)})
+        XCTAssertEqual(diagonalSparse.diagonals[1]!.elements, [0:2, 1:7, 2:12].mapValues{Complex($0)})
+        XCTAssertEqual(diagonalSparse.diagonals[2]!.elements, [0:3, 1:8].mapValues{Complex($0)})
+        XCTAssertEqual(diagonalSparse.diagonals[3]!.elements, [0:4].mapValues{Complex($0)})
         
     }
     
     func test_diagonalSparseAdd() throws {
         
-        let space = VectorSpace<Double>(dimension: 3, label: "test diag sparse add space")
-        let lhs = DiagonalSparseMatrix(in: space, diagonals: [0:MatrixDiagonal(dimension: space.dimension, diagIdx: 0, elements: [0:1, 1:1, 2:1])])
+        let space = VectorSpace(dimension: 3, label: "test diag sparse add space")
+        let lhs = DiagonalSparseMatrix(in: space, diagonals: [0:MatrixDiagonal(dimension: space.dimension, diagIdx: 0, elements: [0:1, 1:1, 2:1].mapValues{Complex($0)})])
         
-        let rhs = DiagonalSparseMatrix(in: space, diagonals: [1:MatrixDiagonal(dimension: space.dimension, diagIdx: 1, elements: [0:1, 1:1])])
+        let rhs = DiagonalSparseMatrix(in: space, diagonals: [1:MatrixDiagonal(dimension: space.dimension, diagIdx: 1, elements: [0:1, 1:1].mapValues{Complex($0)})])
        
-        XCTAssertEqual((lhs + rhs).diagonals[0]!.elements, [0:1, 1:1, 2:1])
-        XCTAssertEqual((lhs + rhs).diagonals[1]!.elements, [0:1, 1:1])
+        XCTAssertEqual((lhs + rhs).diagonals[0]!.elements, [0:1, 1:1, 2:1].mapValues{Complex($0)})
+        XCTAssertEqual((lhs + rhs).diagonals[1]!.elements, [0:1, 1:1].mapValues{Complex($0)})
     }
     
     func test_diagonalSparseSubtract() throws {
         
-        let space = VectorSpace<Double>(dimension: 3, label: "test diag sparse add space")
-        let lhs = DiagonalSparseMatrix(in: space, diagonals: [0:MatrixDiagonal(dimension: space.dimension, diagIdx: 0, elements: [0:1, 1:1, 2:1])])
+        let space = VectorSpace(dimension: 3, label: "test diag sparse add space")
+        let lhs = DiagonalSparseMatrix(in: space, diagonals: [0:MatrixDiagonal(dimension: space.dimension, diagIdx: 0, elements: [0:1, 1:1, 2:1].mapValues{Complex($0)})])
         
-        let rhs = DiagonalSparseMatrix(in: space, diagonals: [1:MatrixDiagonal(dimension: space.dimension, diagIdx: 1, elements: [0:1, 1:1])])
+        let rhs = DiagonalSparseMatrix(in: space, diagonals: [1:MatrixDiagonal(dimension: space.dimension, diagIdx: 1, elements: [0:1, 1:1].mapValues{Complex($0)})])
         
-        XCTAssertEqual((lhs - rhs).diagonals[0]!.elements, [0:1, 1:1, 2:1])
-        XCTAssertEqual((lhs - rhs).diagonals[1]!.elements, [0:-1, 1:-1])
+        XCTAssertEqual((lhs - rhs).diagonals[0]!.elements, [0:1, 1:1, 2:1].mapValues{Complex($0)})
+        XCTAssertEqual((lhs - rhs).diagonals[1]!.elements, [0:-1, 1:-1].mapValues{Complex($0)})
     }
     
     func test_diagonalSparseVecMult() throws {
         
-        let space = VectorSpace<Double>(dimension: 2, label: "test Space")
+        let space = VectorSpace(dimension: 2, label: "test Space")
         
-        let zeroDiag = MatrixDiagonal(dimension: 2, diagIdx: 0, elements: [0: 1, 1:4])
-        let oneDiag = MatrixDiagonal(dimension: 2, diagIdx: 1, elements: [0:2])
-        let minusOneDiag = MatrixDiagonal(dimension: 2, diagIdx: -1, elements: [1:3])
+        let zeroDiag = MatrixDiagonal(dimension: 2, diagIdx: 0, elements: [0: 1.0, 1:4.0].mapValues{Complex($0)})
+        let oneDiag = MatrixDiagonal(dimension: 2, diagIdx: 1, elements: [0:2.0].mapValues{Complex($0)})
+        let minusOneDiag = MatrixDiagonal(dimension: 2, diagIdx: -1, elements: [1:3.0].mapValues{Complex($0)})
         
         let matrix = DiagonalSparseMatrix(in: space,
                                           diagonals: [0: zeroDiag, 1: oneDiag, -1: minusOneDiag])
         
-        var vector = Vector(in: space)
-        vector[0] = 5.0
-        vector[1] = 6.0
-        XCTAssertTrue( (matrix * vector).elements == [17.0,39.0] )
+        let vector = Vector(elements: [5.0, 6.0], in: space)
+        
+        XCTAssertTrue( (matrix * vector).elements == [17.0,39.0].map{Complex($0)} )
     }
     
     func test_diagonalSparseMatMult() throws {
         
-        let testDiagMMSpace = VectorSpace<Double>(dimension: 4, label: "")
+        let testDiagMMSpace = VectorSpace(dimension: 4, label: "")
         
         let A = DiagonalSparseMatrix(in: testDiagMMSpace, diagonals:
-                                        [0: MatrixDiagonal(dimension: 4, diagIdx: 0, elements: [0:1, 1:3, 2:5, 3:7]),
-                                         -1: MatrixDiagonal(dimension: 4, diagIdx: -1, elements: [1: 2, 2:4, 3: 6])])
+                                        [0: MatrixDiagonal(dimension: 4, diagIdx: 0, elements: [0:1, 1:3, 2:5, 3:7].mapValues{Complex($0)}),
+                                         -1: MatrixDiagonal(dimension: 4, diagIdx: -1, elements: [1: 2, 2:4, 3: 6].mapValues{Complex($0)})])
         
         
         let B = DiagonalSparseMatrix(in: testDiagMMSpace, diagonals:
-                                        [-1: MatrixDiagonal(dimension: 4, diagIdx: -1, elements: [1: 1, 2:1, 3:1]),
-                                          1: MatrixDiagonal(dimension: 4, diagIdx: 1, elements: [0:1, 1:1, 2:1])])
+                                        [-1: MatrixDiagonal(dimension: 4, diagIdx: -1, elements: [1: 1, 2:1, 3:1].mapValues{Complex($0)}),
+                                          1: MatrixDiagonal(dimension: 4, diagIdx: 1, elements: [0:1, 1:1, 2:1].mapValues{Complex($0)})])
         
         let C = A*B
         
-        XCTAssertEqual(C.diagonals[-2]!.elements, [2:4, 3:6])
-        XCTAssertEqual(C.diagonals[-1]!.elements, [1:3, 2:5, 3:7])
-        XCTAssertEqual(C.diagonals[0]!.elements, [1:2, 2:4, 3:6])
-        XCTAssertEqual(C.diagonals[1]!.elements, [0:1, 1:3, 2:5])
+        XCTAssertEqual(C.diagonals[-2]!.elements, [2:4, 3:6].mapValues{Complex($0)})
+        XCTAssertEqual(C.diagonals[-1]!.elements, [1:3, 2:5, 3:7].mapValues{Complex($0)})
+        XCTAssertEqual(C.diagonals[0]!.elements, [1:2, 2:4, 3:6].mapValues{Complex($0)})
+        XCTAssertEqual(C.diagonals[1]!.elements, [0:1, 1:3, 2:5].mapValues{Complex($0)})
         
         XCTAssertNil(C.diagonals[-3])
         XCTAssertNil(C.diagonals[2])
@@ -451,21 +424,21 @@ final class CoreTests: XCTestCase {
     func test_diagonalSparseTensorProduct() throws {
         
         
-        let leftSubSpace = VectorSpace<Double>(dimension: 2, label: "")
-        let rightSubSpace = VectorSpace<Double>(dimension: 3, label: "")
-        let fullSpace = VectorSpace<Double>(tensorProductOf: [leftSubSpace, rightSubSpace],
+        let leftSubSpace = VectorSpace(dimension: 2, label: "")
+        let rightSubSpace = VectorSpace(dimension: 3, label: "")
+        let fullSpace = VectorSpace(tensorProductOf: [leftSubSpace, rightSubSpace],
                                             label: "")
-        let A = DiagonalSparseMatrix(in: leftSubSpace, diagonals: [0: MatrixDiagonal(dimension: 2, diagIdx: 0, elements: [0:1]),
-                                                                   1: MatrixDiagonal(dimension: 2, diagIdx: 1, elements: [0:1])])
+        let A = DiagonalSparseMatrix(in: leftSubSpace, diagonals: [0: MatrixDiagonal(dimension: 2, diagIdx: 0, elements: [0:Complex(1)]),
+                                                                   1: MatrixDiagonal(dimension: 2, diagIdx: 1, elements: [0:Complex(1)])])
         
-        let B = DiagonalSparseMatrix(in: rightSubSpace, diagonals: [-1: MatrixDiagonal(dimension: 3, diagIdx: -1, elements: [1:1, 2:2]),
-                                                                     2: MatrixDiagonal(dimension: 3, diagIdx: 2, elements: [0:1])])
+        let B = DiagonalSparseMatrix(in: rightSubSpace, diagonals: [-1: MatrixDiagonal(dimension: 3, diagIdx: -1, elements: [1:1, 2:2].mapValues{Complex($0)}),
+                                                                     2: MatrixDiagonal(dimension: 3, diagIdx: 2, elements: [0:Complex(1)])])
         
         let C = fullSpace.tensorProduct(of: A, with: B)
         
-        XCTAssertEqual(C.diagonals[2]!.elements, [0:1, 1:1, 2:2])
-        XCTAssertEqual(C.diagonals[5]!.elements, [0:1])
-        XCTAssertEqual(C.diagonals[-1]!.elements, [1:1, 2:2])
+        XCTAssertEqual(C.diagonals[2]!.elements, [0:1, 1:1, 2:2].mapValues{Complex($0)})
+        XCTAssertEqual(C.diagonals[5]!.elements, [0:1].mapValues{Complex($0)})
+        XCTAssertEqual(C.diagonals[-1]!.elements, [1:1, 2:2].mapValues{Complex($0)})
         
         for diagIdx in [-5,-4,-3,-2,0,1,3,4] {
             XCTAssertNil(C.diagonals[diagIdx])
@@ -475,13 +448,13 @@ final class CoreTests: XCTestCase {
     
     func test_matrixFromDiagonalSparse() throws {
         
-        let testSpace = VectorSpace<Double>(dimension: 4, label: "")
+        let testSpace = VectorSpace(dimension: 4, label: "")
         
-        let denseMatrix = Matrix<Double>(elements: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
+        let denseMatrix = Matrix(elements: [1.0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
         
         let diagonalSparse = DiagonalSparseMatrix(from: denseMatrix)
         
-        let reproducedDenseMatrix = Matrix<Double>(from: diagonalSparse)
+        let reproducedDenseMatrix = Matrix(from: diagonalSparse)
         
         XCTAssertEqual(reproducedDenseMatrix, denseMatrix)
         
@@ -490,9 +463,9 @@ final class CoreTests: XCTestCase {
     
     func test_diagonalSparseIndexing() throws {
         
-        let testSpace = VectorSpace<Double>(dimension: 4, label: "")
+        let testSpace = VectorSpace(dimension: 4, label: "")
         
-        let denseMatrix = Matrix<Double>(elements: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
+        let denseMatrix = Matrix(elements: [1.0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
         
         let diagonalSparse = DiagonalSparseMatrix(from: denseMatrix)
         
@@ -500,6 +473,22 @@ final class CoreTests: XCTestCase {
             for col in 0..<4 {
                 
                 XCTAssertEqual(denseMatrix[row,col], diagonalSparse[row,col])
+            }
+        }
+    }
+    
+    func test_sparseIndexing_get() throws {
+        
+        let testSpace = VectorSpace(dimension: 4, label: "")
+        
+        let denseMatrix = Matrix(elements: [1.0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], in: testSpace)
+        
+        let sparse_mat = SparseMatrix(from: denseMatrix)
+        
+        for row in 0..<4 {
+            for col in 0..<4 {
+                
+                XCTAssertEqual(denseMatrix[row,col], sparse_mat[row,col])
             }
         }
     }
@@ -584,8 +573,8 @@ final class CoreTests: XCTestCase {
     
     func test_partialTraceMatrixTwoQubit() throws {
         
-        let leftSpace = VectorSpace<Double>(dimension: 2, label: "")
-        let rightSpace = VectorSpace<Double>(dimension: 2, label: "")
+        let leftSpace = VectorSpace(dimension: 2, label: "")
+        let rightSpace = VectorSpace(dimension: 2, label: "")
         
         let totalSpace = VectorSpace(tensorProductOf: [leftSpace, rightSpace], label: "")
         
@@ -594,51 +583,54 @@ final class CoreTests: XCTestCase {
         let reducedDensityMatrixLeft1 = densityMatrix1.traceInto(subSpace: leftSpace)
         let reducedDensityMatrixRight1 = densityMatrix1.traceInto(subSpace: rightSpace)
         
-        XCTAssert(reducedDensityMatrixLeft1.elements == [0.5,0.5,0.5,0.5])
-        XCTAssert(reducedDensityMatrixRight1.elements == [0.5,0.5,0.5,0.5])
+        XCTAssert(reducedDensityMatrixLeft1.elements == [0.5,0.5,0.5,0.5].map{Complex($0)})
+        XCTAssert(reducedDensityMatrixRight1.elements == [0.5,0.5,0.5,0.5].map{Complex($0)})
         
         var densityMatrix2 = Matrix(in: totalSpace)
         
-        densityMatrix2[0,0] = 0.5
-        densityMatrix2[0,3] = 0.5
-        densityMatrix2[3,0] = 0.5
-        densityMatrix2[3,3] = 0.5
+        densityMatrix2[0,0] = Complex(0.5)
+        densityMatrix2[0,3] = Complex(0.5)
+        densityMatrix2[3,0] = Complex(0.5)
+        densityMatrix2[3,3] = Complex(0.5)
         
         let reducedDensityMatrixLeft2 = densityMatrix2.traceInto(subSpace: leftSpace)
         let reducedDensityMatrixRight2 = densityMatrix2.traceInto(subSpace: rightSpace)
        
-        XCTAssert(reducedDensityMatrixLeft2.elements == [0.5, 0.0, 0.0, 0.5])
-        XCTAssert(reducedDensityMatrixRight2.elements == [0.5, 0.0, 0.0, 0.5])
+        XCTAssert(reducedDensityMatrixLeft2.elements == [0.5, 0.0, 0.0, 0.5].map{Complex($0)})
+        XCTAssert(reducedDensityMatrixRight2.elements == [0.5, 0.0, 0.0, 0.5].map{Complex($0)})
         
         
     }
     
     func test_partialTraceMatrixThreeQubit() throws {
         
-        let spaceA = VectorSpace<Double>(dimension: 2, label: "")
-        let spaceB = VectorSpace<Double>(dimension: 2, label: "")
-        let spaceC = VectorSpace<Double>(dimension: 2, label: "")
+        let spaceA = VectorSpace(dimension: 2, label: "")
+        let spaceB = VectorSpace(dimension: 2, label: "")
+        let spaceC = VectorSpace(dimension: 2, label: "")
         let totalSpace = VectorSpace(tensorProductOf: [spaceA, spaceB, spaceC], label: "")
         
         var densityMatrixABC = Matrix(in: totalSpace)
+        
         //rho = (1/2)*(|GHZ><GHZ| + |W><W|)
-        densityMatrixABC[0,0] = 1.0/4.0
-        densityMatrixABC[0,7] = 1.0/4
+        // |W> = (1/sqrt(3))(|001> + |010> + |100>)
+        //|GHZ> = (1/sqrt(2))(|000> + |111>)
+        densityMatrixABC[0,0] = Complex(1.0/4.0)
+        densityMatrixABC[0,7] = Complex(1.0/4)
         
-        densityMatrixABC[1,1] = 1.0/6
-        densityMatrixABC[1,2] = 1.0/6
-        densityMatrixABC[1,6] = 1.0/6
+        densityMatrixABC[1,1] = Complex(1.0/6)
+        densityMatrixABC[1,2] = Complex(1.0/6)
+        densityMatrixABC[1,6] = Complex(1.0/6)
         
-        densityMatrixABC[2,1] = 1.0/6
-        densityMatrixABC[2,2] = 1.0/6
-        densityMatrixABC[2,6] = 1.0/6
+        densityMatrixABC[2,1] = Complex(1.0/6)
+        densityMatrixABC[2,2] = Complex(1.0/6)
+        densityMatrixABC[2,6] = Complex(1.0/6)
         
-        densityMatrixABC[6,1] = 1.0/6
-        densityMatrixABC[6,2] = 1.0/6
-        densityMatrixABC[6,6] = 1.0/6
+        densityMatrixABC[6,1] = Complex(1.0/6)
+        densityMatrixABC[6,2] = Complex(1.0/6)
+        densityMatrixABC[6,6] = Complex(1.0/6)
         
-        densityMatrixABC[7,0] = 1.0/4
-        densityMatrixABC[7,7] = 1.0/4
+        densityMatrixABC[7,0] = Complex(1.0/4)
+        densityMatrixABC[7,7] = Complex(1.0/4)
         
         //tracing out middle space
         let spacesAC = totalSpace.createSubspace(spacesToKeep: spaceA, spaceC, label: "")
@@ -647,9 +639,74 @@ final class CoreTests: XCTestCase {
         let correctElements = [5.0/12, 0.0, 1.0/6, 0, 0, 1.0/6, 0, 0, 1.0/6, 0, 1.0/6, 0, 0, 0, 0, 1.0/4]
         
         for i in 0..<correctElements.count {
-            XCTAssertEqual(reducedDensityAC.elements[i], correctElements[i], accuracy: 0.00000001)
+            XCTAssertEqual(reducedDensityAC.elements[i].real, correctElements[i], accuracy: 0.00000001)
             
         }
+    }
+    
+    
+    func testPartialTraceMultiQubit() throws {
+        // Testing for 6 qubits tracing out three. Product state of each qubit in |𝜓> = (1/sqrt(2))(|0> + |1>)
+        //After trace out should have an 8x8 matrix where every element is 1/8.
+        let numQubits = 6
+        let indicesToTraceOut = [0,3,5]
+        
+        var dm_val = 1.0
+        var totalSpaceDim = 1
+        
+        for _ in 0..<numQubits {
+            dm_val /= 2.0
+            totalSpaceDim *= 2
+        }
+        
+        let dm_elements = [Double](repeating: dm_val, count: totalSpaceDim*totalSpaceDim)
+        
+        var subspaces: [VectorSpace] = []
+        
+        for i in 0..<numQubits {
+            subspaces.append(VectorSpace(dimension: 2, label: "Qubit \(i) subspace"))
+        }
+        
+        let totalSpace = VectorSpace(tensorProductOf: subspaces, label: "total qubit space")
+        
+        let densityMatrix = Matrix(elements: dm_elements, in: totalSpace)
+        
+        let subspaceToKeep = totalSpace.createSubspace(removeSpacesAtIndices: indicesToTraceOut, label: "subspace to keep")
+        
+        let reduced_dm = densityMatrix.traceInto(subSpace: subspaceToKeep)
+        
+        for elem in reduced_dm.elements {
+            XCTAssertEqual(elem.real, 1.0/8.0, accuracy: 0.000001)
+            XCTAssertEqual(elem.imag, 0.0, accuracy: 0.000001)
+        }
+    }
+    
+    func testPartialTraceTwoQubitSparse() throws {
+        
+        /*
+         rho =  (0.5*|0><0| + 0.5 * |1><1|)_A ⊗ (0.5 * |0><0| + |1><1|)_B
+         */
+        let leftSpace = VectorSpace(dimension: 2, label: "")
+        let rightSpace = VectorSpace(dimension: 2, label: "")
+        
+        let totalSpace = VectorSpace(tensorProductOf: [leftSpace, rightSpace], label: "")
+        
+        var elems: [CoordinateStorage] = []
+        
+        for i in 0..<totalSpace.dimension {
+            elems.append(CoordinateStorage(value: 1.0/Double(totalSpace.dimension), row: i, col: i))
+        }
+        
+        let densityMatrix1 = SparseMatrix(values: elems, in: totalSpace)
+        
+        let reducedDensityMatrixLeft1 = densityMatrix1.traceInto(subSpace: leftSpace)
+        let reducedDensityMatrixRight1 = densityMatrix1.traceInto(subSpace: rightSpace)
+        
+        print("\nleft: ", reducedDensityMatrixLeft1)
+        print("\nright: ",reducedDensityMatrixRight1, "\n")
+ 
+    
+        
     }
 
     

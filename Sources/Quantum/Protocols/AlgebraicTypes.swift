@@ -22,18 +22,18 @@ import Foundation
 // this protocol, which is inherited by operator and vector types insures that
 // we are able to make the necessary checks.
 
-public protocol livesInAVectorSpace: definedOverScalarField {
-    var space: VectorSpace<ScalarField> { get set }
+public protocol livesInAVectorSpace {
+    var space: VectorSpace { get set }
 }
 
-public protocol OperatorType: providesDoubleAndIntMultiplication,
-                              Addable,
+public protocol OperatorType: Addable,
                               Subtractable,
                               Multipliable,
-                              livesInAVectorSpace {
-    static func * (lhs: Self, rhs: Vector<ScalarField>) -> Vector<ScalarField>
-    subscript (row: Int, col: Int) -> ScalarField {get set}
-    init(in: VectorSpace<ScalarField>)
+                              livesInAVectorSpace,
+                              ClosedUnderScalarFieldMultiplication {
+    static func * (lhs: Self, rhs: Vector) -> Vector
+    subscript (row: Int, col: Int) -> Complex {get set}
+    init(in: VectorSpace)
 }
 
 extension OperatorType {
@@ -43,24 +43,24 @@ extension OperatorType {
 }
 
 extension OperatorType {
-    public func expectationValue(of psi: Vector<ScalarField>) -> ScalarField {
+    public func expectationValue(of psi: Vector) -> Complex {
             checkInSameSpace(self, psi)
             return (self * psi).innerProduct(dualVector: psi)
     }
 }
 // Annoying this is needed to select the right inner product
 // - this overrides above when conjugate needed in inner product (but not explicitly needed here)
-extension OperatorType where Self.ScalarField: ComplexNumber {
-    public func expectationValue(of psi: Vector<ScalarField>) -> ScalarField {
-            checkInSameSpace(self, psi)
-            return (self * psi).innerProduct(dualVector: psi)
-    }
-}
+//extension OperatorType where Self.ScalarField: ComplexNumber {
+//    public func expectationValue(of psi: Vector<ScalarField>) -> ScalarField {
+//            checkInSameSpace(self, psi)
+//            return (self * psi).innerProduct(dualVector: psi)
+//    }
+//}
 
 
 extension OperatorType {
     
-    public func traceInto(subSpace: VectorSpace<Self.ScalarField>) -> Self {
+    public func traceInto(subSpace: VectorSpace) -> Self {
         
 
         let totalSpaceDimensions = space.setofSpaces.map { $0.dimension }
@@ -112,8 +112,8 @@ public protocol VectorArithmetic:    Addable,
 }
 
 public protocol VectorType: VectorArithmetic, Collection {
-    var elements: [ScalarField] { get set }
-    init(elements: [ScalarField], in space: VectorSpace<ScalarField>)
+    var elements: [Complex] { get set }
+    init(elements: [Complex], in space: VectorSpace)
 }
 
 // add to vector collection conformance

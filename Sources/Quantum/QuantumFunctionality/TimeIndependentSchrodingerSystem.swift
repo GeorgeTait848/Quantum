@@ -2,19 +2,19 @@
 
 import Foundation
 open class TimeIndependentSchrodingerSystem {
-    public var Psi: StateVector
-    public var minus_i_H: MatrixOperator
-    public var time: Real
+    public var Psi: Vector
+    public var minus_i_H: Matrix
+    public var time: Double
     
-    public init(initialstate: StateVector,
-                hamiltonian: MatrixOperator) {
-        let minusi = ComplexReal( real: 0.0, imag: -1.0 )
+    public init(initialstate: Vector,
+                hamiltonian: Matrix) {
+        let minusi = Complex( real: 0.0, imag: -1.0 )
         time = 0.0
         Psi = initialstate
         minus_i_H = minusi * hamiltonian
     }
     
-    open func schrodingerEquation(time: Real, psi: StateVector)-> StateVector {
+    open func schrodingerEquation(psi: Vector, time: Double)-> Vector {
             
         if diagonalSparse { return diagSparse_minus_i_H! * psi }
         
@@ -26,11 +26,11 @@ open class TimeIndependentSchrodingerSystem {
     
     
     public var diagonalSparse = false
-    public var diagSparse_minus_i_H: DiagonalSparseMatrix<ComplexReal>?
+    public var diagSparse_minus_i_H: DiagonalSparseMatrix?
     
     
     public var sparse = false
-    public var sparse_minus_i_H: SparseMatrix<ComplexReal>?
+    public var sparse_minus_i_H: SparseMatrix?
     
     
     open func useSparseAlgebra() {
@@ -51,15 +51,21 @@ open class TimeIndependentSchrodingerSystem {
         diagonalSparse = false
     }
 
-    public func evolve(by dt: Real) {
+    public func evolve(by dt: Double) {
         
-        multiStepIvpIntegrator(from: time,
-                               to: time + dt,
-                               first_try_of_stepsize: dt,
-                               smallest_allowed_value_of_stepsize: 1.0e-8,
-                               accuracy: 10e-6,
-                               y: &Psi,
-                               derivative_function: schrodingerEquation)
+//        multiStepIvpIntegrator(from: time,
+//                               to: time + dt,
+//                               first_try_of_stepsize: dt,
+//                               smallest_allowed_value_of_stepsize: 1.0e-8,
+//                               accuracy: 10e-6,
+//                               y: &Psi,
+//                               derivative_function: schrodingerEquation)
+//
+//
+//
+//        time += dt
+        
+        adaptiveRungeKuttaOverRange(f: schrodingerEquation, y: &Psi, from: time, to: time + dt, h: dt, relativeTol: 1e-6)
         
         time += dt
         
@@ -83,19 +89,19 @@ open class TimeIndependentSchrodingerSystem {
 
 
 open class TimeIndependentSchrodingerSparseSystem {
-    public var Psi: StateVector
-    public var minus_i_H: SparseMatrix<ComplexReal>
-    public var time: Real
+    public var Psi: Vector
+    public var minus_i_H: SparseMatrix
+    public var time: Double
     
-    public init(initialstate: StateVector,
-                hamiltonian: SparseMatrix<ComplexReal>) {
-        let minusi = ComplexReal( real: 0.0, imag: -1.0 )
+    public init(initialstate: Vector,
+                hamiltonian: SparseMatrix) {
+        let minusi = Complex( real: 0.0, imag: -1.0 )
         time = 0.0
         Psi = initialstate
         minus_i_H = minusi * hamiltonian
     }
     
-    open func schrodingerEquation(time: Real, psi: StateVector)-> StateVector {
+    open func schrodingerEquation(psi: Vector, time: Double)-> Vector {
             
       return minus_i_H * psi
         
@@ -103,15 +109,19 @@ open class TimeIndependentSchrodingerSparseSystem {
             
     }
 
-    public func evolve(by dt: Real) {
+    public func evolve(by dt: Double) {
         
-        multiStepIvpIntegrator(from: time,
-                               to: time + dt,
-                               first_try_of_stepsize: dt,
-                               smallest_allowed_value_of_stepsize: 1.0e-8,
-                               accuracy: 10e-6,
-                               y: &Psi,
-                               derivative_function: schrodingerEquation)
+//        multiStepIvpIntegrator(from: time,
+//                               to: time + dt,
+//                               first_try_of_stepsize: dt,
+//                               smallest_allowed_value_of_stepsize: 1.0e-8,
+//                               accuracy: 10e-6,
+//                               y: &Psi,
+//                               derivative_function: schrodingerEquation)
+//
+//        time += dt
+        
+        adaptiveRungeKuttaOverRange(f: schrodingerEquation, y: &Psi, from: time, to: time + dt, h: dt, relativeTol: 1e-6)
         
         time += dt
         
@@ -127,9 +137,9 @@ open class TimeIndependentSchrodingerSparseSystem {
     }
     
     
-    public func simulate(times: [Real], takeExpectationOf qoperators: SparseMatrix<ComplexReal>...) -> [[ComplexReal]] {
+    public func simulate(times: [Double], takeExpectationOf qoperators: SparseMatrix...) -> [[Complex]] {
         
-        var expectationValues = [[ComplexReal]](repeating: [ComplexReal](repeating: ComplexReal(0), count: times.count), count: qoperators.count)
+        var expectationValues = [[Complex]](repeating: [Complex](repeating: Complex(real: 0), count: times.count), count: qoperators.count)
         
         for i in 0..<times.count-1 {
             
@@ -154,19 +164,19 @@ open class TimeIndependentSchrodingerSparseSystem {
 
 
 open class TimeIndependentSchrodingerDiagonalSparseSystem {
-    public var Psi: StateVector
-    public var minus_i_H: DiagonalSparseMatrix<ComplexReal>
-    public var time: Real
+    public var Psi: Vector
+    public var minus_i_H: DiagonalSparseMatrix
+    public var time: Double
     
-    public init(initialstate: StateVector,
-                hamiltonian: DiagonalSparseMatrix<ComplexReal>) {
-        let minusi = ComplexReal( real: 0.0, imag: -1.0 )
+    public init(initialstate: Vector,
+                hamiltonian: DiagonalSparseMatrix) {
+        let minusi = Complex(real: 0.0, imag: -1.0 )
         time = 0.0
         Psi = initialstate
         minus_i_H = minusi * hamiltonian
     }
     
-    open func schrodingerEquation(time: Real, psi: StateVector)-> StateVector {
+    open func schrodingerEquation(psi: Vector, time: Double)-> Vector {
             
       return minus_i_H * psi
         
@@ -174,15 +184,17 @@ open class TimeIndependentSchrodingerDiagonalSparseSystem {
             
     }
 
-    public func evolve(by dt: Real) {
+    public func evolve(by dt: Double) {
         
-        multiStepIvpIntegrator(from: time,
-                               to: time + dt,
-                               first_try_of_stepsize: dt,
-                               smallest_allowed_value_of_stepsize: 1.0e-8,
-                               accuracy: 10e-6,
-                               y: &Psi,
-                               derivative_function: schrodingerEquation)
+//        multiStepIvpIntegrator(from: time,
+//                               to: time + dt,
+//                               first_try_of_stepsize: dt,
+//                               smallest_allowed_value_of_stepsize: 1.0e-8,
+//                               accuracy: 10e-6,
+//                               y: &Psi,
+//                               derivative_function: schrodingerEquation)
+        
+        adaptiveRungeKuttaOverRange(f: schrodingerEquation, y: &Psi, from: time, to: time + dt, h: dt, relativeTol: 1e-6)
         
         time += dt
         
@@ -198,9 +210,9 @@ open class TimeIndependentSchrodingerDiagonalSparseSystem {
     }
     
     
-    public func simulate(times: [Real], takeExpectationOf qoperators: DiagonalSparseMatrix<ComplexReal>...) -> [[ComplexReal]] {
+    public func simulate(times: [Double], takeExpectationOf qoperators: DiagonalSparseMatrix...) -> [[Complex]] {
         
-        var expectationValues = [[ComplexReal]](repeating: [ComplexReal](repeating: ComplexReal(0), count: times.count), count: qoperators.count)
+        var expectationValues = [[Complex]](repeating: [Complex](repeating: Complex(real: 0), count: times.count), count: qoperators.count)
         
         for i in 0..<times.count-1 {
             

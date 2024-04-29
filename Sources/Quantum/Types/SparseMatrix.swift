@@ -7,24 +7,28 @@
 
 import Foundation
 
-public struct SparseMatrix<T: Scalar>: OperatorType {
-    public subscript(row: Int, col: Int) -> T {
+public struct SparseMatrix: OperatorType {
+    
+    public subscript(row: Int, col: Int) -> Complex {
         
         get {
-            var output = T(0)
-            for elem in values {
-                if elem.row != row {
-                    continue
-                }
+            
+            let row_first_elem_idx = row_first_element_offsets[row]
+            
+            if row_first_elem_idx == -1 { return Complex(real: 0) }
+            let num_elems_in_row = nonzero_elements_per_row[row]
+            
+            let start = row_first_elem_idx
+            let end = row_first_elem_idx + num_elems_in_row
+            
+            for i in start..<end {
                 
-                if elem.col != col {
-                    continue
-                }
+                let elem = values[i]
+                if elem.col == col { return elem.value }
                 
-                output = elem.value
-                break
             }
-            return output
+            
+            return Complex(real: 0)
         }
         
         set {
@@ -35,16 +39,16 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     
     
     
-    public typealias ScalarField = T
-    public var space: VectorSpace<ScalarField>
+
+    public var space: VectorSpace
     
     let rows: Int
     let columns: Int
-    public var values: [CoordinateStorage<T>]
+    public var values: [CoordinateStorage]
     internal var nonzero_elements_per_row: [Int]
     internal var row_first_element_offsets: [Int]
     
-    public init(from matrix: Matrix<ScalarField>) {
+    public init(from matrix: Matrix) {
         rows = matrix.space.dimension
         columns = matrix.space.dimension
         space = matrix.space
@@ -52,41 +56,37 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         nonzero_elements_per_row = [Int](repeating: 0, count: matrix.space.dimension)
         row_first_element_offsets = [Int](repeating: -1, count: matrix.space.dimension)
         
-        
-        for i in 0 ..< rows {
-            for j in 0 ..< columns {
-
-                if matrix[i,j] == T(0.0) { continue }
-                values.append(CoordinateStorage(value: matrix[i,j], row: i, col: j))
-            }
-            
-        }
-        values.sort()
-        
         var curr_row = 0
         var prev_row = 0
         var curr_offset = 0
         
-        if values[0].row == 0 {
-            row_first_element_offsets[0] = 0
-        }
-        
-        for value in values {
-            
-            curr_row = value.row
-            nonzero_elements_per_row[curr_row] += 1
-            
-            
-            if curr_row == prev_row { curr_offset += 1 }
-            else {
-                row_first_element_offsets[curr_row] = curr_offset
-                prev_row = curr_row
+        for i in 0 ..< rows {
+            for j in 0 ..< columns {
+                
+                if matrix[i,j] == Complex(real: 0.0) { continue }
+                
+                values.append(CoordinateStorage(value: matrix[i,j], row: i, col: j))
+                
+                curr_row = i
+                nonzero_elements_per_row[curr_row] += 1
+                
+                if curr_row == prev_row {
+                    curr_offset += 1
+                }
+                else {
+                    row_first_element_offsets[curr_row] = curr_offset
+                    curr_offset += 1
+                    prev_row = curr_row
+                }
             }
         }
         
-        
+        if values[0].row == 0 {
+            row_first_element_offsets[0] = 0
+        }
+
     }
-    public init (in space: VectorSpace<ScalarField>) {
+    public init (in space: VectorSpace) {
         rows = space.dimension
         columns = space.dimension
         self.values = []
@@ -96,8 +96,8 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         
     }
     
-    public init (values: [CoordinateStorage<ScalarField>],
-                 in space: VectorSpace<ScalarField>) {
+    public init (values: [CoordinateStorage],
+                 in space: VectorSpace) {
         
         
         rows = space.dimension
@@ -136,22 +136,38 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         }
     }
     // MARK: Arithmatic
-    public static func * (left: Self, right: ScalarField) -> Self {
+    public static func * (left: Self, right: Complex) -> Self {
         return Self(values: left.values.map( { $0 * right } ), in: left.space)
     }
-    public static func / (left: Self, right: ScalarField) -> Self {
-        return Self(values: left.values.map( { $0 / right } ), in: left.space)
+    
+    public static func * (left: Self, right: Double) -> Self {
+        return Self(values: left.values.map( { $0 * right } ), in: left.space)
     }
-    public static func * (left: ScalarField, right: Self) -> Self {
+    
+    public static func * (left: Complex, right: Self) -> Self {
+        return Self(values: right.values.map( { $0 * left } ), in: right.space)
+    }
+    
+    public static func * (left: Double, right: Self) -> Self {
         return Self(values: right.values.map( { $0 * left } ), in: right.space)
     }
     
     
+    public static func / (left: Self, right: Complex) -> Self {
+        return Self(values: left.values.map( { $0 / right } ), in: left.space)
+    }
+    
+    public static func / (left: Self, right: Double) -> Self {
+        return Self(values: left.values.map( { $0 / right } ), in: left.space)
+    }
+    
+    
+    
     public static func scalarBinaryOperationAdditionLogic(
-        lhs: SparseMatrix<ScalarField>,
-        rhs: SparseMatrix<ScalarField>,
-        operation: (ScalarField,ScalarField)->ScalarField)
-    -> SparseMatrix<ScalarField> {
+        lhs: SparseMatrix,
+        rhs: SparseMatrix,
+        operation: (Complex,Complex)->Complex)
+    -> SparseMatrix {
         assert (lhs.rows == rhs.rows)
         assert (lhs.columns == rhs.columns)
         assert (lhs.space == rhs.space)
@@ -189,19 +205,19 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         return out
     }
     
-    public static func + (lhs: SparseMatrix<ScalarField>,
-                          rhs: SparseMatrix<ScalarField>)
-    -> SparseMatrix<ScalarField> {
+    public static func + (lhs: SparseMatrix,
+                          rhs: SparseMatrix)
+    -> SparseMatrix {
         return Self.scalarBinaryOperationAdditionLogic(lhs: lhs, rhs: rhs, operation: +)
     }
     
-    public static func - (lhs: SparseMatrix<ScalarField>,
-                          rhs: SparseMatrix<ScalarField>)
-    -> SparseMatrix<ScalarField> {
+    public static func - (lhs: SparseMatrix,
+                          rhs: SparseMatrix)
+    -> SparseMatrix {
         return Self.scalarBinaryOperationAdditionLogic(lhs: lhs, rhs: rhs, operation: -)
     }
     
-    public static func * (lhs: SparseMatrix<T>, rhs: SparseMatrix<T>) -> SparseMatrix<T> {
+    public static func * (lhs: SparseMatrix, rhs: SparseMatrix) -> SparseMatrix {
         //        errorStream.write("""
         //                          Sparse Matrix Multiplication not yet properly implemented
         //                          Avoid using as only inlcuded to correctly satisfy Mutiplible
@@ -242,7 +258,7 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
         for  i in 0 ..< dim {
             var l = 0
             for j in 0 ..< dim {
-                var sum = T(0)
+                var sum = Complex(real: 0.0)
                 var activePoint = false
                 k = kk
                 times2 : while ( k < values.count ) {
@@ -290,43 +306,44 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
     }
     
     
-    public static func * (lhs: SparseMatrix<ScalarField>,
-                          rhs: Vector<ScalarField>) -> Vector<ScalarField> {
-//                assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
-//
-//                var output = Vector(in: lhs.space)
-//
-//                for matrixElement in lhs.values {
-//                    let col = matrixElement.col
-//                    let row = matrixElement.row
-//                    let temp = matrixElement.value * rhs[col]
-//                    output[row] = output[row] + temp
-//                }
-//                return output
+    public static func * (lhs: SparseMatrix,
+                          rhs: Vector) -> Vector {
+                assert(lhs.space == rhs.space, "Matrix operators and vector must be in same space")
+
+                var output = Vector(in: lhs.space)
+
+                for matrixElement in lhs.values {
+                    let col = matrixElement.col
+                    let row = matrixElement.row
+                    let temp = matrixElement.value * rhs[col]
+                    output[row] = output[row] + temp
+                }
+                return output
         
-        return lhs.parallelVectorMultiply(vector: rhs)
+//        return lhs.parallelVectorMultiply(vector: rhs)
         
         }
     
     
-    func parallelVectorMultiply(vector: Vector<T>) -> Vector<T> {
+    func parallelVectorMultiply(vector: Vector) -> Vector {
         
         guard space == vector.space else {
             fatalError("Number of columns in the matrix must match the size of the vector.")
         }
         
-        var outputElements = [T](repeating: T(0), count: space.dimension)
+        var outputElements = [Complex](repeating: Complex(real: 0), count: space.dimension)
         
         DispatchQueue.concurrentPerform(iterations: space.dimension) { row in
             
             let start_idx = row_first_element_offsets[row]
             if start_idx == -1 { return }
             let end_idx = start_idx + nonzero_elements_per_row[row]
-            
+            var rowSum = Complex(real: 0.0)
             for i in start_idx..<end_idx {
-                outputElements[row] = outputElements[row] + values[i].value * vector[values[i].col]
+                rowSum = rowSum + values[i].value * vector[values[i].col]
             }
-         
+            
+            outputElements[row] = rowSum
         }
         
         return Vector(elements: outputElements, in: space)
@@ -335,9 +352,9 @@ public struct SparseMatrix<T: Scalar>: OperatorType {
 }
 
 extension Matrix {
-    public init(fromSparse matrix: SparseMatrix<T>)  {
+    public init(fromSparse matrix: SparseMatrix)  {
         space = matrix.space
-        elements = Array.init(repeating: T(0.0), count: space.dimension * space.dimension)
+        elements = Array.init(repeating: Complex(real: 0.0), count: space.dimension * space.dimension)
         for element in matrix.values {
             self[element.row,element.col] = element.value
         }
@@ -345,14 +362,18 @@ extension Matrix {
 }
 // MARK: - Coodinate Storage
 
-public struct CoordinateStorage<T: Scalar> {
-    public init(value: T, row: Int, col: Int) {
+public struct CoordinateStorage {
+    public init(value: Complex, row: Int, col: Int) {
         self.value = value
         self.row = row
         self.col = col
     }
     
-    public var value: T
+    public init (value: Double, row: Int, col: Int) {
+        self.init(value: Complex(value), row: row, col: col)
+    }
+    
+    public var value: Complex
     public var row: Int
     public var col: Int
     
@@ -360,8 +381,8 @@ public struct CoordinateStorage<T: Scalar> {
     
 }
 
-extension CoordinateStorage: Equatable where T: Equatable {
-    public static func == (lhs: CoordinateStorage<T>, rhs: CoordinateStorage<T>) -> Bool {
+extension CoordinateStorage: Equatable {
+    public static func == (lhs: CoordinateStorage, rhs: CoordinateStorage) -> Bool {
         let colsEqual   = lhs.col == rhs.col
         let rowsEqual   = lhs.row == rhs.row
         let valuesEqual = lhs.value == rhs.value
@@ -372,24 +393,35 @@ extension CoordinateStorage: Equatable where T: Equatable {
 
 
 
-extension CoordinateStorage: definedOverScalarField {
-    public typealias ScalarField = T
-}
-extension CoordinateStorage: ClosedUnderScalarFieldMultiplication where T: Multipliable {
-    public static func / (left: CoordinateStorage<T>, right: T) -> CoordinateStorage<T> {
+extension CoordinateStorage: ClosedUnderScalarFieldMultiplication {
+    public static func / (left: CoordinateStorage, right: Complex) -> CoordinateStorage {
         return CoordinateStorage(value: left.value / right , row: left.row, col: left.col)
     }
     
-    public static func * (left: CoordinateStorage<T>, right: T) -> CoordinateStorage<T> {
+    public static func / (left: CoordinateStorage, right: Double) -> CoordinateStorage {
+        return CoordinateStorage(value: left.value / right , row: left.row, col: left.col)
+    }
+    
+    public static func * (left: CoordinateStorage, right: Complex) -> CoordinateStorage {
         return CoordinateStorage(value: left.value * right , row: left.row, col: left.col)
     }
     
-    public static func * (left: T, right: CoordinateStorage<T>) -> CoordinateStorage<T> {
+    public static func * (left: CoordinateStorage, right: Double) -> CoordinateStorage {
+        return CoordinateStorage(value: left.value * right , row: left.row, col: left.col)
+    }
+    
+    public static func * (left: Complex, right: CoordinateStorage) -> CoordinateStorage {
+        return CoordinateStorage(value: right.value * left , row: right.row, col: right.col)
+    }
+    
+    public static func * (left: Double, right: CoordinateStorage) -> CoordinateStorage {
         return CoordinateStorage(value: right.value * left , row: right.row, col: right.col)
     }
 }
+
+
 extension CoordinateStorage: Negatable {
-    public static prefix func - (value: CoordinateStorage<T>) -> CoordinateStorage<T> {
+    public static prefix func - (value: CoordinateStorage) -> CoordinateStorage {
         return CoordinateStorage(value: -value.value, row: value.row, col: value.col)
     }
     
@@ -402,13 +434,12 @@ extension CoordinateStorage: CustomStringConvertible {
 }
 // need to be able to order stored values to add and equate arrays of CoordinateStorage
 // note that the Value itself is not needed and may not even be meaningful if scalar is an unordered field
-extension CoordinateStorage: Comparable where T: Equatable {
-    public static func < (lhs: CoordinateStorage<T>, rhs: CoordinateStorage<T>) -> Bool {
+extension CoordinateStorage: Comparable {
+    public static func < (lhs: CoordinateStorage, rhs: CoordinateStorage) -> Bool {
         return ( lhs.row < rhs.row || ((lhs.row == rhs.row) ) && (lhs.col < rhs.col))
     }
 }
 
 
 extension SparseMatrix: ClosedUnderScalarFieldMultiplication {}
-extension SparseMatrix: providesDoubleAndIntMultiplication {}
 //  Created by M J Everitt on 20/01/2022.

@@ -9,7 +9,7 @@ import Foundation
 
 public func benchmarkDiagonalSparseMatMult(dims: [Int], writeDataToFileAt: String) {
     
-    let diagonalSparseMM: (DiagonalSparseMatrix<ComplexReal>, DiagonalSparseMatrix<ComplexReal>) -> DiagonalSparseMatrix<ComplexReal>  =  {A,B in A*B}
+    let diagonalSparseMM: (DiagonalSparseMatrix, DiagonalSparseMatrix) -> DiagonalSparseMatrix  =  {A,B in A*B}
     let lc = 50
     
     var lowDensities = [Double](repeating: 0.0, count: lc)
@@ -31,7 +31,7 @@ public func benchmarkDiagonalSparseMatMult(dims: [Int], writeDataToFileAt: Strin
 }
 
 
-public func makeMatrixByDiagonalDensity(in space: VectorSpace<ComplexReal>, densityOfDiagonals: Double) -> DiagonalSparseMatrix<ComplexReal> {
+public func makeMatrixByDiagonalDensity(in space: VectorSpace, densityOfDiagonals: Double) -> DiagonalSparseMatrix {
     
     var output = DiagonalSparseMatrix(in: space)
     
@@ -41,10 +41,10 @@ public func makeMatrixByDiagonalDensity(in space: VectorSpace<ComplexReal>, dens
     
     while n < numDiags {
         let (rowLowerLim, rowUpperLim) = getRowLimits(dim: space.dimension, diagIdx: currDiagIdx)
-        var elem: [Int:ComplexReal] = [:]
+        var elem: [Int:Complex] = [:]
         
         for row in rowLowerLim...rowUpperLim {
-            elem[row] = ComplexReal(real: 1, imag: 0)
+            elem[row] = Complex(real: 1, imag: 0)
         }
         
         let curr = MatrixDiagonal(dimension: space.dimension, diagIdx: currDiagIdx, elements: elem)

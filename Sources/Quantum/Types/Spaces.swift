@@ -25,14 +25,14 @@ fileprivate var space_counter = 0
 // Note typealias ScalarField is important rather than <T> to make clear
 // closure under scalar arithmetic as we have several different types working together.
 
-public class VectorSpace<T: Scalar>: Hashable, definedOverScalarField {
+public class VectorSpace: Hashable  {
     public let dimension: Int
     public let description: String
     internal let identifier: Int
     internal var setofSpaces: [VectorSpace]
 
-    public typealias ScalarField = T
-    public typealias SpaceVector = Vector<T>
+
+//    public typealias SpaceVector = Vector<T>
 
     public init(dimension: Int, label: String) {
         self.dimension = dimension
@@ -51,20 +51,20 @@ public class VectorSpace<T: Scalar>: Hashable, definedOverScalarField {
         hasher.combine(setofSpaces)
     }
     
-    public var identityOperator: Matrix<ScalarField> {
+    public var identityOperator: Matrix {
         return  makeIdentityMatrix()
     }
     
-    public func makeIdentityMatrix() -> Matrix<ScalarField> {
-        var output = Matrix<ScalarField>(in: self)
+    public func makeIdentityMatrix() -> Matrix {
+        var output = Matrix(in: self)
         for i in 0 ..< dimension {
-            output[i, i] = T.one
+            output[i, i] = Complex(1)
         }
         return output
     }
     
     
-    public func createSubspace(spacesToKeep: VectorSpace<T>..., label: String ,sorted: Bool = false) -> VectorSpace<T> {
+    public func createSubspace(spacesToKeep: VectorSpace..., label: String, sorted: Bool = false) -> VectorSpace {
         
         var sortedSpacesToKeep = spacesToKeep
         if !sorted {
@@ -84,11 +84,25 @@ public class VectorSpace<T: Scalar>: Hashable, definedOverScalarField {
         return VectorSpace(tensorProductOf: sortedSpacesToKeep, label: label, sorted: true)
 
     }
+    
+    public func createSubspace(removeSpacesAtIndices: [Int], label: String) -> VectorSpace {
+        
+        var spacesToKeep: [VectorSpace] = []
+        
+        for i in 0..<setofSpaces.count {
+            if removeSpacesAtIndices.contains(i) { continue }
+            spacesToKeep.append(setofSpaces[i])
+        }
+        
+        return VectorSpace(tensorProductOf: spacesToKeep, label: label, sorted: true)
+        
+        
+    }
 }
 
 // MARK: - Add Tensor product capability
 extension VectorSpace {
-    convenience public init(tensorProductOf spaces: [VectorSpace<ScalarField>],
+    convenience public init(tensorProductOf spaces: [VectorSpace],
                             label: String, sorted: Bool = false) {
         assert(spaces.count > 1, "Cannot make a tensor product of one space")
         
@@ -119,9 +133,8 @@ extension VectorSpace {
     
     
     
-    public func tensorProduct(of A: Matrix<ScalarField>,
-                              with B: Matrix<ScalarField>)
-    -> Matrix<ScalarField> {
+    public func tensorProduct(of A: Matrix, with B: Matrix) -> Matrix {
+        
         assert (setofSpaces.count == 2, "Tensor product currently only implemented for two operators not in tensor product spaces")
 
         let temp = [A,B].sorted(by: { $0.space.identifier < $1.space.identifier} )
@@ -141,9 +154,9 @@ extension VectorSpace {
         return Matrix(elements: C, in: self)
     }
 
-    public func tensorProduct(of A: DiagonalSparseMatrix<ScalarField>,
-                              with B: DiagonalSparseMatrix<ScalarField>)
-    -> DiagonalSparseMatrix<ScalarField> {
+    public func tensorProduct(of A: DiagonalSparseMatrix,
+                              with B: DiagonalSparseMatrix)
+    -> DiagonalSparseMatrix {
         
         assert (setofSpaces.count == 2, "Tensor product currently only implemented for two operators not in tensor product spaces")
 
@@ -177,9 +190,9 @@ extension VectorSpace {
         
     }
     
-    public func tensorProduct(of A: Vector<ScalarField>,
-                              with B: Vector<ScalarField>)
-    -> Vector<ScalarField> {
+    public func tensorProduct(of A: Vector,
+                              with B: Vector)
+    -> Vector {
         assert (setofSpaces.count == 2, "Tensor product currently only implemented for two operators not in tensor product spaces")
 
         let temp = [A,B].sorted(by: { $0.space.identifier < $1.space.identifier} )

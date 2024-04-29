@@ -27,6 +27,16 @@ public protocol Multipliable  {
     static func * (lhs: Self, rhs: Self) -> Self
 }
 
+public protocol ClosedUnderScalarFieldMultiplication {
+    static func * (left: Self, right: Complex) -> Self
+    static func * (left: Complex, right: Self) -> Self
+    static func / (left: Self, right: Complex) -> Self
+    
+    static func * (left: Self, right: Double) -> Self
+    static func * (left: Double, right: Self) -> Self
+    static func / (left: Self, right: Double) -> Self
+}
+
 public protocol Subtractable {
     static func - (lhs: Self, rhs: Self) -> Self
 }
@@ -73,65 +83,63 @@ extension Has_getAdditiveIdentity where Self: Has_IntegerInitializer {
     }
 }
 
+//
+//// MARK: - Compound protcols
+//
+//// Note Hashable implies Equitable
+//public protocol NaturalNumberLike: Addable,
+//                                   Multipliable,
+//                                   Subtractable,
+//                                   Has_IntegerInitializer,
+//                                   Has_getMultiplicativeIdentity,
+//                                   Hashable {}
+//
+//public protocol PositiveIntegerLike: NaturalNumberLike,
+//                                     Has_getAdditiveIdentity {}
+//
+//public protocol IntegerLike: PositiveIntegerLike,
+//                             Negatable {}
+//
+//public protocol Scalar: IntegerLike, Has_DoubleInitializer,
+//                        Dividable {}
+//
+//
+//// MARK: - Number types with certain computed properties
+//
+//public protocol definedOverScalarField {
+//    associatedtype ScalarField: Scalar
+//}
+//
+//public protocol Has_ScalarInit: definedOverScalarField {
+//    init(_ : Self.ScalarField)
+//}
 
-// MARK: - Compound protcols
-
-// Note Hashable implies Equitable
-public protocol NaturalNumberLike: Addable,
-                                   Multipliable,
-                                   Subtractable,
-                                   Has_IntegerInitializer,
-                                   Has_getMultiplicativeIdentity,
-                                   Hashable {}
-
-public protocol PositiveIntegerLike: NaturalNumberLike,
-                                     Has_getAdditiveIdentity {}
-
-public protocol IntegerLike: PositiveIntegerLike,
-                             Negatable {}
-
-public protocol Scalar: IntegerLike, Has_DoubleInitializer,
-                        Dividable {}
 
 
-// MARK: - Number types with certain computed properties
 
-public protocol definedOverScalarField {
-    associatedtype ScalarField: Scalar
-}
+//public protocol providesDoubleAndIntMultiplication: ClosedUnderScalarFieldMultiplication {
+//}
 
-public protocol Has_ScalarInit: definedOverScalarField {
-    init(_ : Self.ScalarField)
-}
-
-public protocol ClosedUnderScalarFieldMultiplication: definedOverScalarField {
-    static func * (left: Self, right: ScalarField) -> Self
-    static func * (left: ScalarField, right: Self) -> Self
-    static func / (left: Self, right: ScalarField) -> Self
-}
-public protocol providesDoubleAndIntMultiplication: ClosedUnderScalarFieldMultiplication {
-}
-
-extension providesDoubleAndIntMultiplication  {
-    public static func * (left: Self, right: Double) -> Self {
-        return left * ScalarField(right)
-    }
-    public static func * (left: Double, right: Self) -> Self {
-        return ScalarField(left) * right
-    }
-    public static func / (left: Self, right: Double) -> Self {
-        return left / ScalarField(right)
-    }
-    public static func * (left: Self, right: Int) -> Self {
-        return left * ScalarField(right)
-    }
-    public static func * (left: Int, right: Self) -> Self {
-        return ScalarField(left) * right
-    }
-    public static func / (left: Self, right: Int) -> Self {
-        return left / ScalarField(right)
-    }
-}
+//extension providesDoubleAndIntMultiplication  {
+//    public static func * (left: Self, right: Double) -> Self {
+//        return left * right
+//    }
+//    public static func * (left: Double, right: Self) -> Self {
+//        return ScalarField(left) * right
+//    }
+//    public static func / (left: Self, right: Double) -> Self {
+//        return left / ScalarField(right)
+//    }
+//    public static func * (left: Self, right: Int) -> Self {
+//        return left * ScalarField(right)
+//    }
+//    public static func * (left: Int, right: Self) -> Self {
+//        return ScalarField(left) * right
+//    }
+//    public static func / (left: Self, right: Int) -> Self {
+//        return left / ScalarField(right)
+//    }
+//}
 
 // MARK: - Extensions
 

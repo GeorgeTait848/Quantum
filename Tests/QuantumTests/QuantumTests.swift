@@ -21,9 +21,9 @@ final class QuantumTests: XCTestCase {
         
         XCTAssert(
             space.numberOperator.elements ==
-            makeAComplexArray([0.0, 0.0, 0.0,
-                               0.0, 1.0, 0.0,
-                               0.0, 0.0, 2.0])
+            [0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+             0.0, 0.0, 2.0].map{Complex($0)}
         )
     }
     
@@ -31,9 +31,9 @@ final class QuantumTests: XCTestCase {
         let space = StateSpace(dimension: 3, label: "test Space")
         XCTAssert(
             space.creationOperator.elements ==
-            makeAComplexArray([0.0, 0.0,       0.0,
+            [0.0, 0.0,       0.0,
                               1.0 , 0.0,       0.0,
-                              0.0 , sqrt(2.0), 0.0])
+             0.0 , sqrt(2.0), 0.0].map{Complex($0)}
         )
     }
     
@@ -41,39 +41,42 @@ final class QuantumTests: XCTestCase {
         let space = StateSpace(dimension: 3, label: "test Space")
         XCTAssert(
             space.parityOperator.elements ==
-            makeAComplexArray([1.0,0.0,0.0,
+            [1.0,0.0,0.0,
                                0.0,-1.0,0.0,
-                               0.0,0.0,1.0])
+             0.0,0.0,1.0].map{Complex($0)}
         )
     }
     
     func test_spin_operators() throws {
-        let i = Complex<Real>(real: 0.0, imag: 1.0)
+        let i = Complex(real: 0.0, imag: 1.0)
         let space = StateSpace(dimension: 2, label: "test spin")
+        
+        let complexOne = Complex(1)
+        let complexZero = Complex(0)
         XCTAssert(
-            space.sigmaZ.elements == [Complex.one,Complex.zero,
-                                    Complex.zero,-Complex.one]
+            space.sigmaZ.elements == [complexOne,complexZero,
+                                    complexZero,-complexOne]
         )
         XCTAssert(
-            space.sigmaX.elements == [Complex.zero,Complex.one,
-                                    Complex.one,Complex.zero]
+            space.sigmaX.elements == [complexZero, complexOne,
+                                    complexOne, complexZero]
         )
         XCTAssert(
-            space.sigmaY.elements == [Complex.zero,-i,
-                                    i,Complex.zero]
+            space.sigmaY.elements == [complexZero,-i,
+                                    i,complexZero]
         )
         XCTAssert(
-            space.sigmaPlus.elements == [Complex.zero,Complex.one,
-                                       Complex.zero,Complex.zero]
+            space.sigmaPlus.elements == [complexZero,complexOne,
+                                       complexZero,complexZero]
         )
         XCTAssert(
-            space.sigmaMinus.elements == [Complex.zero,-Complex.zero,
-                                        Complex.one,Complex.zero]
+            space.sigmaMinus.elements == [complexZero,complexZero,
+                                        complexOne,complexZero]
         )
     }
     
     func test_spin_algebra() throws {
-        let i = Complex<Real>(real: 0.0, imag: 1.0)
+        let i = Complex(real: 0.0, imag: 1.0)
         let space = StateSpace(dimension: 2, label: "test spin")
 
         let Sx = space.sigmaX * 0.5
@@ -102,7 +105,7 @@ final class QuantumTests: XCTestCase {
     }
     
     func test_am_algebra() throws {
-        let i = Complex<Real>(real: 0.0, imag: 1.0)
+        let i = Complex(real: 0.0, imag: 1.0)
         let space = StateSpace(dimension: 5, label: "test spin")
         
         let Jx = space.Jx
@@ -134,7 +137,7 @@ final class QuantumTests: XCTestCase {
     func test_referenceTypesForSpace() throws {
         let testSpace = StateSpace(dimension: 3, label: "first test space")
         // check reference and data types work as expected
-        var A =  MatrixOperator(in: testSpace)
+        var A =  Matrix(in: testSpace)
         let B =  A
         XCTAssert(A == B)
         
@@ -179,7 +182,7 @@ final class QuantumTests: XCTestCase {
         let space = StateSpace(dimension: 4, label: "")
         let I = space.identityOperator_diagonalSparse
         let _ = 0.5*I
-        let minusi = ComplexReal(real: 0.0, imag: -1)
+        let minusi = Complex(real: 0.0, imag: -1)
         
         print(Matrix(from: minusi*I))
     }

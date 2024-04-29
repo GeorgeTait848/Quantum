@@ -11,14 +11,23 @@ import Foundation
 // Cant seem to do better than this - its roughly the same approach as used in Swift Numerics
 // Dont like the fact that code needs to be duplicated (its not very DRY).
 
-extension Double: Scalar, definedOverScalarField {
-    public typealias ScalarField = Self 
-}
-extension Double: ClosedUnderScalarFieldMultiplication {
+//extension Double: Scalar, definedOverScalarField {
+//    public typealias ScalarField = Self
+//}
+//extension Double: ClosedUnderScalarFieldMultiplication {
+//    public static func * (left: Double, right: Complex) -> Double {
+//        <#code#>
+//    }
+//    
+//    
+//}
+
+extension Double: Addable,Subtractable, Multipliable, Dividable, Has_IntegerInitializer {
     
 }
 
 extension Double: Has_Exp & Has_Sin & Has_Cos & Has_Atan & Has_Sqrt & Has_Abs & Has_Pow {
+    
     // It is annoying that Swift needs this for trig
     // but not for arithmetic functions.
     public static func pow(_ x: Self, _ y: Self) -> Self { return Foundation.pow(x,y) }
@@ -40,11 +49,9 @@ extension Double: Has_Exp & Has_Sin & Has_Cos & Has_Atan & Has_Sqrt & Has_Abs & 
     public static func abs(_ x: Self) -> Self { return x.magnitude }
 }
 
-extension Float32: Scalar, definedOverScalarField {
-    public typealias ScalarField = Self
-}
-
 extension Float32: Has_Exp & Has_Sin & Has_Cos & Has_Atan & Has_Sqrt & Has_Abs & Has_Pow {
+ 
+    
     // It is annoying that Swift needs this for trig
     // but not for arithmetic functions.
     public static func pow(_ x: Self, _ y: Self) -> Self { return Foundation.pow(x,y) }

@@ -8,13 +8,15 @@
 import Foundation
 
 
-public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
-    public typealias ScalarField = T
-    public var space: VectorSpace<T>
-    public var diagonals: [Int: MatrixDiagonal<T>]
+public struct DiagonalSparseMatrix: OperatorType {
+    
+    
+
+    public var space: VectorSpace
+    public var diagonals: [Int: MatrixDiagonal]
      
     
-    public subscript (diagIdx: Int) -> MatrixDiagonal<T>? {
+    public subscript (diagIdx: Int) -> MatrixDiagonal? {
         
         get {
             if let diag = self.diagonals[diagIdx] {
@@ -29,19 +31,19 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
         }
     }
     
-    public subscript (row: Int, col: Int) -> T {
+    public subscript (row: Int, col: Int) -> Complex {
         
         get {
             let diagIdx = col - row
             
-            guard let diag = self.diagonals[diagIdx] else { return T(0) }
-            guard let val = diag[row] else {return T(0)}
+            guard let diag = self.diagonals[diagIdx] else { return Complex(real: 0) }
+            guard let val = diag[row] else {return Complex(real: 0)}
             
             return val
         }
         
         set {
-            if newValue == T(0) {return}
+            if newValue == Complex(real: 0) {return}
             let diagIdx = col - row
             
             self.diagonals[diagIdx]?.elements[row] = newValue
@@ -50,18 +52,18 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     
     
     
-    public init(in space: VectorSpace<T>, diagonals: [Int : MatrixDiagonal<T>]) {
+    public init(in space: VectorSpace, diagonals: [Int : MatrixDiagonal]) {
         self.space = space
         self.diagonals = diagonals
     }
     
-    public init(in space: VectorSpace<T>) {
+    public init(in space: VectorSpace) {
         self.space = space
         self.diagonals = [:]
         
     }
     
-    public init(from matrix: Matrix<T>) {
+    public init(from matrix: Matrix) {
         
         self.space = matrix.space
         self.diagonals = [:]
@@ -69,12 +71,12 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
         
         for diagIdx in 1-dim...dim-1 {
             
-            var currDiag: MatrixDiagonal<T>? = nil
+            var currDiag: MatrixDiagonal? = nil
             let (rowLowerLim, rowUpperLim) = getRowLimits(dim: dim, diagIdx: diagIdx)
             
             for row in rowLowerLim...rowUpperLim {
                 
-                if matrix[row, row+diagIdx] == T(0) {continue}
+                if matrix[row, row+diagIdx] == Complex(real: 0) {continue}
                 
                 if currDiag == nil {
                     currDiag = MatrixDiagonal(dimension: dim, diagIdx: diagIdx, elements: [row: matrix[row, row+diagIdx]])
@@ -94,36 +96,58 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     }
     
     
-    public static func / (left: DiagonalSparseMatrix<T>, right: ScalarField) -> DiagonalSparseMatrix<T> {
+    public static func / (left: DiagonalSparseMatrix, right: Complex) -> DiagonalSparseMatrix {
         var output = Self(in: left.space)
         output.diagonals = left.diagonals.mapValues({$0 / right})
         return output
     }
     
-    public static func * (left: ScalarField, right: DiagonalSparseMatrix<T>) -> DiagonalSparseMatrix<T> {
+    public static func / (left: DiagonalSparseMatrix, right: Double) -> DiagonalSparseMatrix {
+        var output = Self(in: left.space)
+        output.diagonals = left.diagonals.mapValues({$0 / right})
+        return output
+    }
+    
+    public static func * (left: Complex, right: DiagonalSparseMatrix) -> DiagonalSparseMatrix {
         var output = Self(in: right.space)
         output.diagonals = right.diagonals.mapValues({$0 * left})
         return output
     }
     
-    public static func * (left: DiagonalSparseMatrix<T>, right: ScalarField) -> DiagonalSparseMatrix<T> {
+    public static func * (left: Double, right: DiagonalSparseMatrix) -> DiagonalSparseMatrix {
+        var output = Self(in: right.space)
+        output.diagonals = right.diagonals.mapValues({$0 * left})
+        return output
+    }
+    
+    public static func * (left: DiagonalSparseMatrix, right: Complex) -> DiagonalSparseMatrix {
+        var output = Self(in: left.space)
+        output.diagonals = left.diagonals.mapValues({$0 * right})
+        return output
+    }
+    
+    public static func * (left: DiagonalSparseMatrix, right: Double) -> DiagonalSparseMatrix {
         var output = Self(in: left.space)
         output.diagonals = left.diagonals.mapValues({$0 * right})
         return output
     }
     
     
-    public static func * (lhs: DiagonalSparseMatrix<T>, rhs: Vector<T>) -> Vector<T> {
+    
+    public static func * (lhs: DiagonalSparseMatrix, rhs: Vector) -> Vector {
         assert(lhs.space == rhs.space)
-        var outputElements = [T](repeating: T(0), count: lhs.space.dimension)
+        var outputElements = [Complex](repeating: Complex(real: 0), count: lhs.space.dimension)
         
-        for (lhsDiagIdx, lhsDiag) in lhs.diagonals {
-            for (row, lhsVal) in lhsDiag.elements {
+        for row in 0..<outputElements.count {
+            for (lhsDiagIdx, lhsDiag) in lhs.diagonals {
+                guard let lhsVal = lhsDiag[row] else {continue}
                 
                 let column = row + lhsDiagIdx
-                if (column <= 0 || column >= lhs.space.dimension) { continue }
-                
-                outputElements[row] = outputElements[row] + lhsVal * rhs[column]
+                if (column >= 0 && column < lhs.space.dimension) {
+                    
+                    outputElements[row] = outputElements[row] + lhsVal * rhs[column]
+                    
+                }
             }
             
         }
@@ -135,7 +159,7 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     
 
     
-    public static func + (lhs: DiagonalSparseMatrix<T>, rhs: DiagonalSparseMatrix<T>) -> DiagonalSparseMatrix<T> {
+    public static func + (lhs: DiagonalSparseMatrix, rhs: DiagonalSparseMatrix) -> DiagonalSparseMatrix {
         assert(lhs.space == rhs.space,
                "Cannot add sparse matrices from different spaces")
         
@@ -150,25 +174,25 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     
     
     
-    public static func - (lhs: DiagonalSparseMatrix<T>, rhs: DiagonalSparseMatrix<T>) -> DiagonalSparseMatrix<T> {
+    public static func - (lhs: DiagonalSparseMatrix, rhs: DiagonalSparseMatrix) -> DiagonalSparseMatrix {
         assert(lhs.space == rhs.space,
                "Cant multiply sparse matrices from different spaces")
         
         var output = DiagonalSparseMatrix(in: lhs.space, diagonals: lhs.diagonals)
         
         for (rhsDiagIdx, rhsDiag) in rhs.diagonals {
-            guard let lhsDiag = output[rhsDiagIdx] else { output[rhsDiagIdx] = T(-1) * rhsDiag; continue}
+            guard let lhsDiag = output[rhsDiagIdx] else { output[rhsDiagIdx] = -1.0 * rhsDiag; continue}
             output[rhsDiagIdx] = lhsDiag - rhsDiag
         }
         return output
     }
     
-    public static func * (lhs: DiagonalSparseMatrix<T>, rhs: DiagonalSparseMatrix<T>) -> DiagonalSparseMatrix<T> {
+    public static func * (lhs: DiagonalSparseMatrix, rhs: DiagonalSparseMatrix) -> DiagonalSparseMatrix {
         assert(lhs.space == rhs.space,
                "Cant multiply sparse matrices from different spaces")
         
         var output = DiagonalSparseMatrix(in: lhs.space)
-        let dim = lhs.space.dimension
+        let dim: Int = lhs.space.dimension
         
         
         for (lhsDiagIdx, lhsDiag) in lhs.diagonals {
@@ -196,13 +220,11 @@ public struct DiagonalSparseMatrix<T: Scalar>: OperatorType {
     
 }
 
-extension DiagonalSparseMatrix: providesDoubleAndIntMultiplication {}
-
 extension Matrix {
-    public init (from diagonalSparseMatrix: DiagonalSparseMatrix<T>) {
+    public init (from diagonalSparseMatrix: DiagonalSparseMatrix) {
         space = diagonalSparseMatrix.space
         
-        elements = [T](repeating: T(0), count: space.dimension*space.dimension)
+        elements = [Complex](repeating: Complex(real: 0), count: space.dimension*space.dimension)
         
         for (diagIdx, diag) in diagonalSparseMatrix.diagonals {
             
@@ -215,17 +237,14 @@ extension Matrix {
     }
 }
 
-
-public struct MatrixDiagonal<T: Scalar> {
+public struct MatrixDiagonal {
     
-    
-    public typealias ScalarField = T
     public var dimension: Int
     public var diagIdx: Int
-    public  var elements: [Int: T]
+    public  var elements: [Int: Complex]
     
     
-    public init(dimension: Int, diagIdx: Int, elements: [Int : T]) {
+    public init(dimension: Int, diagIdx: Int, elements: [Int : Complex]) {
         
         self.diagIdx = diagIdx
         self.elements = elements
@@ -238,7 +257,7 @@ public struct MatrixDiagonal<T: Scalar> {
         
     }
     
-    public subscript (row: Int) -> T? {
+    public subscript (row: Int) -> Complex? {
         
         get {
             
@@ -337,21 +356,38 @@ public struct MatrixDiagonal<T: Scalar> {
         
     }
     
-    public static func * (lhs: MatrixDiagonal, rhs: ScalarField) -> Self {
+    public static func * (lhs: MatrixDiagonal, rhs: Complex) -> Self {
         
         return Self(dimension: lhs.dimension, diagIdx: lhs.diagIdx, elements: lhs.elements.mapValues({$0 * rhs}))
     }
     
-    public static func * (lhs: ScalarField, rhs: MatrixDiagonal) -> Self {
+    public static func * (lhs: MatrixDiagonal, rhs: Double) -> Self {
+        
+        return Self(dimension: lhs.dimension, diagIdx: lhs.diagIdx, elements: lhs.elements.mapValues({$0 * rhs}))
+    }
+    
+    
+    
+    public static func * (lhs: Complex, rhs: MatrixDiagonal) -> Self {
         
         return Self(dimension: rhs.dimension, diagIdx: rhs.diagIdx, elements: rhs.elements.mapValues({$0 * lhs}))
     }
     
-    public static func / (lhs: MatrixDiagonal, rhs: ScalarField) -> Self {
+    public static func * (lhs: Double, rhs: MatrixDiagonal) -> Self {
+        
+        return Self(dimension: rhs.dimension, diagIdx: rhs.diagIdx, elements: rhs.elements.mapValues({$0 * lhs}))
+    }
+    
+    public static func / (lhs: MatrixDiagonal, rhs: Complex) -> Self {
         
         return Self(dimension: lhs.dimension, diagIdx: lhs.diagIdx, elements: lhs.elements.mapValues({$0 / rhs}))
     }
+   
     
+    public static func / (lhs: MatrixDiagonal, rhs: Double) -> Self {
+        
+        return Self(dimension: lhs.dimension, diagIdx: lhs.diagIdx, elements: lhs.elements.mapValues({$0 / rhs}))
+    }
     
     public func tensorProductWithIdentityFromLeft(ofDimension dim: Int) -> MatrixDiagonal {
         
@@ -382,7 +418,7 @@ public struct MatrixDiagonal<T: Scalar> {
         return output
     }
     
-    public func tensorProductWith(_ rhs: MatrixDiagonal) -> MatrixDiagonal<T> {
+    public func tensorProductWith(_ rhs: MatrixDiagonal) -> MatrixDiagonal {
         
         let rhsDim = rhs.dimension
         let outputDim = self.dimension * rhsDim

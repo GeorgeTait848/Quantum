@@ -20,8 +20,8 @@ public protocol Has_Exp {
     static func exp(_ x: Self) -> Self
 }
 
-public protocol Has_Abs: definedOverScalarField {
-    static func abs(_ x: Self) -> ScalarField
+public protocol Has_Abs {
+    static func abs(_ x: Self) -> Self
 }
 public protocol Has_Pow {
     static func pow(_ x: Self, _ y: Self) -> Self

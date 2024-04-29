@@ -17,10 +17,6 @@
  */
 import Foundation
 
-public func makeAComplexArray<T: Scalar>(_ values: [T]) -> [Complex<T>] {
-    return values.map( { Complex(real: $0, imag: T(0) ) } )
-}
-
 public func scalarBinaryOperation<T>(array: [T],by value: T, operation: (T,T)->T) -> [T] {
     return array.map( { (element: T) -> T in return operation(element, value) } )
 }
@@ -79,13 +75,13 @@ func delta(_ n: Int,_ m: Int) -> Int {
 
 // https://en.wikipedia.org/wiki/Kronecker_product
 // [accessed: 12/01/2022 - see Definition]
-public func kronekerProduct<T: Scalar>  (
-    A: [T], rowsA: Int, colsA :Int,
-    B: [T], rowsB: Int, colsB :Int)
--> [T]  {
+public func kronekerProduct  (
+    A: [Complex], rowsA: Int, colsA :Int,
+    B: [Complex], rowsB: Int, colsB :Int)
+-> [Complex]  {
     assert(A.count == rowsA * colsA, "dimension of A bad: dim(A) = \(A.count), rowsA = \(rowsA), colsB = \(colsA)")
   assert(B.count == rowsB * colsB, "dimension of A bad: dim(A) = \(B.count), rowsA = \(rowsB), colsB = \(colsB)")
-  var C = Array(repeating: T.zero,
+    var C = Array(repeating: Complex(real: 0.0),
                 count: rowsA*rowsB*colsA*colsB)
     
   let colsC = colsA * colsB
@@ -249,7 +245,7 @@ public func SEPC_matrixTensorProdWithRightBasisState(basisStateDimension: Int, b
 
 //  Created by M J Everitt on 17/01/2022.
 
-public func getBasisStateContributionToPartialTrace<T: OperatorType> (traceInto subspace: VectorSpace<T.ScalarField>,
+public func getBasisStateContributionToPartialTrace<T: OperatorType> (traceInto subspace: VectorSpace,
                                                                       fullMatrix: T,
                                                                       selectionIndices: [Int]) -> T {
     

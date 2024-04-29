@@ -21,19 +21,19 @@ import Foundation
 // MARK: - Complex number protocols
 
 
-public protocol ComplexNumber: Scalar & definedOverScalarField {
+public protocol ComplexNumber {
     
-    var real: ScalarField { get set }
-    var imag: ScalarField { get set }
+    var real: Double { get set }
+    var imag: Double { get set }
     
-    init(real: ScalarField, imag: ScalarField)
-    init(real: ScalarField)
+    init(real: Double, imag: Double)
+    init(real: Double)
 }
 
 extension ComplexNumber {
     // Could get rid of the need to cast to ScalarField by making its Scalar & ExpressibleByIntegerLiteral
-    public init(_ realValue: Int) { self.init(real: ScalarField(realValue), imag: ScalarField(0) ) }
-    public init(_ realValue: Double) { self.init(real: ScalarField(realValue), imag: ScalarField(0) ) }
+//    public init(_ realValue: Int) { self.init(real: ScalarField(realValue), imag: ScalarField(0) ) }
+//    public init(_ realValue: Double) { self.init(real: ScalarField(realValue), imag: ScalarField(0) ) }
 
     public var conjugate: Self { return Self(real: self.real, imag: -self.imag ) }
 
@@ -61,50 +61,52 @@ extension ComplexNumber {
         return (lhs.real == rhs.real) && (lhs.imag == rhs.imag)
     }
 
-    public static func + (lhs: Self, rhs: Self.ScalarField) -> Self {
+    public static func + (lhs: Self, rhs: Double) -> Self {
         return Self(real: lhs.real + rhs , imag: lhs.imag)
     }
-    public static func + (lhs: Self.ScalarField, rhs: Self) -> Self {
+    public static func + (lhs: Double, rhs: Self) -> Self {
         return Self(real: lhs + rhs.real , imag: rhs.imag )
     }
 
-    public static func - (lhs: Self, rhs: Self.ScalarField) -> Self {
+    public static func - (lhs: Self, rhs: Double) -> Self {
         return Self(real: lhs.real - rhs , imag: lhs.imag )
     }
-    public static func - (lhs: Self.ScalarField, rhs: Self) -> Self {
+    public static func - (lhs: Double, rhs: Self) -> Self {
         return Self(real: lhs - rhs.real , imag: -rhs.imag )
     }
 
-    public static func * (lhs: Self, rhs: Self.ScalarField) -> Self {
+    public static func * (lhs: Self, rhs: Double) -> Self {
         return Self(real: lhs.real * rhs, imag: lhs.imag * rhs)
     }
-    public static func * (lhs: Self.ScalarField, rhs: Self) -> Self {
+    public static func * (lhs: Double, rhs: Self) -> Self {
         return Self(real: lhs * rhs.real, imag: lhs * rhs.imag )
     }
 
-    public static func / (lhs: Self, rhs: Self.ScalarField) -> Self {
+    public static func / (lhs: Self, rhs: Double) -> Self {
         return Self(real: lhs.real / rhs, imag: lhs.imag / rhs)
     }
 }
 
 extension ComplexNumber {
-    public var norm: ScalarField { return self.real * self.real + self.imag * self.imag }
+    public var norm: Double { return self.real * self.real + self.imag * self.imag }
 }
 
-extension ComplexNumber where Self.ScalarField: Has_Sqrt {
-    public var modulus: ScalarField { return ScalarField.sqrt(self.norm) }
+extension ComplexNumber {
+    public var modulus: Double { return sqrt(self.norm) }
 }
 
-extension ComplexNumber where Self.ScalarField: Has_Atan {
-    public var argument: ScalarField {
-        return ScalarField.atan2(imag,real) }
+extension ComplexNumber {
+    public var argument: Double {
+        return atan2(imag,real) }
 }
 
-extension ComplexNumber where Self.ScalarField: Has_Exp {
-    public static func exp(_ x: ScalarField) -> Self {
-        return( Self(real: ScalarField.exp(x), imag: ScalarField(0) ) )
-    }
-}
+//extension ComplexNumber {
+//    public static func exp(_ x: Double) -> Self {
+//
+//        let exp_x: Double = exp(x)
+//        return Self(real: exp_x, imag: 0)
+////    }
+//}
 
 
 //  Created by M J Everitt on 17/01/2022.

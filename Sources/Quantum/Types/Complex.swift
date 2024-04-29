@@ -10,53 +10,58 @@
 import Foundation
 
 
-public struct Complex<T: Scalar>: ComplexNumber, Has_ScalarInit {
-    public init(_ r: T) {
+public struct Complex: ComplexNumber, Hashable {
+    
+    
+    public init(_ r: Double) {
         self.init(real: r)
     }
     
-    public init(real: T) {
+    public init(real: Double) {
         self.real = real
-        self.imag = T.zero
+        self.imag = 0.0
     }
-    
-    public typealias ScalarField = T
 
-    public var real: T
-    public var imag: T 
+    public var real: Double
+    public var imag: Double
         
-    public init(real: T, imag: T) {
+    public init(real: Double, imag: Double) {
         self.real = real
         self.imag = imag
     }
-}
+    
+    public init (modulus: Double, argument: Double) {
+        self.init(real: modulus * cos(argument),
+                  imag: modulus * sin(argument))
 
-extension Complex where T: Has_Sin & Has_Cos {
-    public init (modulus: Self.ScalarField, argument: Self.ScalarField) {
-        self.init(real: modulus * Self.ScalarField.cos(argument),
-                  imag: modulus * Self.ScalarField.sin(argument))
     }
 }
+
+
+
 
 extension Complex: CustomStringConvertible {
     public var description: String {
         return "\(real) + \(imag) i"
     }
 }
-extension Complex: Has_Exp where T: Has_Exp & Has_Cos & Has_Sin {
-    public static func exp(_ x: Self) -> Self {
-        let realExp = ScalarField.exp( x.real )
-        return( Self(real: realExp * ScalarField.cos(x.imag),
-                     imag: realExp * ScalarField.sin(x.imag)) )
-    }
-}
-extension Complex: Has_Sqrt where T: Has_Exp & Has_Cos & Has_Sin & Has_Atan & Has_Sqrt {
-    public static func sqrt(_ x: Self) -> Self {
-        return Self(modulus: T.sqrt(x.modulus), argument: x.argument / T(2) )
-    }
-}
-extension Complex: Has_Abs where T: Has_Sqrt {
-    public static func abs(_ x: Complex<T>) -> T {
+
+//sort this shit later
+
+//extension Complex: Has_Exp {
+//    public static func exp(_ x: Self) -> Self {
+//        let realExp: Double = exp(x.real)
+//        return( Self(real: realExp * cos(x.imag),
+//                     imag: realExp * sin(x.imag)) )
+//    }
+//}
+//extension Complex: Has_Sqrt where T: Has_Exp & Has_Cos & Has_Sin & Has_Atan & Has_Sqrt {
+//    public static func sqrt(_ x: Self) -> Self {
+//        return Self(modulus: T.sqrt(x.modulus), argument: x.argument / T(2) )
+//    }
+//}
+extension Complex {
+    public static func abs(_ x: Self) -> Double {
         return x.modulus
     }
 }
