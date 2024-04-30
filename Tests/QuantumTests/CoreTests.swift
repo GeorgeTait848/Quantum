@@ -5,6 +5,7 @@
 // One might consider the code that is used to generate the images for each chapter are better tests of the library than those presented here.
 
 import Foundation
+import Accelerate
 import XCTest
 @testable import Quantum
 
@@ -709,6 +710,127 @@ final class CoreTests: XCTestCase {
         
     }
 
+    
+    func test_accelerate_mmul() throws {
+        
+        let space = VectorSpace(dimension: 2, label: "Accelerate mmul test space")
+        
+        let A = Matrix(elements: [Complex(1.0), Complex(2.0), Complex(3.0), Complex(4.0)], in: space)
+        let B = Matrix(elements: [Complex(5.0), Complex(6.0), Complex(7.0), Complex(8.0)], in: space)
+        
+        let C = A.accelerateMatrixMultiplication(B)
+        
+        XCTAssertEqual(C.elements, [Complex(19),Complex(22),Complex(43),Complex(50)])
+        
+        
+    }
+    
+    
+    func test_Accelerate_matrixTimesVector() throws {
+        let space = VectorSpace(dimension: 2, label: "test Space")
+        var matrix = Matrix(in: space)
+        matrix[0,0] = Complex(1.0)
+        matrix[0,1] = Complex(2.0)
+        matrix[1,0] = Complex(3.0)
+        matrix[1,1] = Complex(4.0)
+        var vector = Vector(in: space)
+        vector[0] = Complex(5.0)
+        vector[1] = Complex(6.0)
+        
+        let res = matrix.accelerateVectorMult(vector)
+        
+        
+        XCTAssertTrue(res.elements == [Complex(17.0),Complex(39.0)] )
+    }
+    
+    func test_Accelerate_matrixTimesVector_new_rep() throws {
+        let space = VectorSpace(dimension: 2, label: "test Space")
+        
+        let lhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = lhsReal.initialize(from: [1,2,3,4])
+        
+        let lhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = lhsImag.initialize(from: [0,0,0,0])
+        
+        let lhsElem = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
+        
+        
+        
+        var matrix = DSPComplexMatrix(elements: lhsElem, in: space)
+        var vector = Vector(in: space)
+        vector[0] = Complex(5.0)
+        vector[1] = Complex(6.0)
+        
+        let res = matrix.accelerateVectorMult(vector)
+        
+        
+        XCTAssertTrue(res.elements == [Complex(17.0),Complex(39.0)] )
+    }
+    
+    func test_DSP_matrix_add() throws {
+        let space = VectorSpace(dimension: 2, label: "test Space")
+        
+        let lhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = lhsReal.initialize(from: [1,2,3,4])
+        
+        let lhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = lhsImag.initialize(from: [5,6,7,8])
+        
+        let lhsElem = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
+        
+        var lhs = DSPComplexMatrix(elements: lhsElem, in: space)
+        
+        let rhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = rhsReal.initialize(from: [1,2,3,4])
+        
+        let rhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = rhsImag.initialize(from: [5,6,7,8])
+        
+        let rhsElem = DSPDoubleSplitComplex(realp: rhsReal.baseAddress!, imagp: rhsImag.baseAddress!)
+        
+        var rhs = DSPComplexMatrix(elements: rhsElem, in: space)
+        
+        let res = lhs + rhs
+        
+        let res_real = [2.0,4,6,8]
+        let res_imag = [10.0, 12, 14, 16]
+        
+        for i in 0..<space.dimension * space.dimension {
+            XCTAssertEqual(res.elements.realp[i], res_real[i])
+            XCTAssertEqual(res.elements.imagp[i], res_imag[i])
+        }
+    }
+    
+    func test_DSP_matrix_subtract() throws {
+        let space = VectorSpace(dimension: 2, label: "test Space")
+        
+        let lhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = lhsReal.initialize(from: [1,2,3,4])
+        
+        let lhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = lhsImag.initialize(from: [5,6,7,8])
+        
+        let lhsElem = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
+        
+        var lhs = DSPComplexMatrix(elements: lhsElem, in: space)
+        
+        let rhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = rhsReal.initialize(from: [1,2,3,4])
+        
+        let rhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
+        _ = rhsImag.initialize(from: [5,6,7,8])
+        
+        let rhsElem = DSPDoubleSplitComplex(realp: rhsReal.baseAddress!, imagp: rhsImag.baseAddress!)
+        
+        var rhs = DSPComplexMatrix(elements: rhsElem, in: space)
+        
+        let res = lhs - rhs
+        
+        for i in 0..<space.dimension * space.dimension {
+            XCTAssertEqual(res.elements.realp[i], 0.0)
+            XCTAssertEqual(res.elements.imagp[i], 0.0)
+        }
+    }
     
 }
 

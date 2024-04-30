@@ -59,45 +59,35 @@ public protocol Integrable:
                   Addable & ClosedUnderScalarFieldMultiplication{}
 
 
-// MARK: - Euler Step
-
-/* Note dydx is an optional as only want to pass this in in adaptive setpsize
-   context. Otherwise we might as well calculate it in the function
-
-   Also note that we are avoiding using inout as a) they dont work with default
-   values in arguments and b) it is copy in and copy out in swift so not the same
-   as pointers and we do not get an efficiency boost.
-*/
-
-// MARK: - Runge Kutta order 4
-
-// based on rk4 in numerical.recipes/book/book.html
-
-
-public func adaptiveRungeKuttaOverRange <T: AdaptiveSteppable> (f: (T, Double) -> T, y: inout T,  from x_0: Double, to x_f: Double, h: Double, relativeTol: Double) {
+public func adaptiveRungeKuttaOverRange <T: AdaptiveSteppable> (f: (T, Double) -> T,
+                                                                y: inout T,  from x_0: Double,
+                                                                to x_f: Double, h: Double,
+                                                                relativeTol: Double) {
     
     var current_h = h
-    var current_y = y
     var current_x = x_0
     
     
     while current_x < x_f {
 
-        current_h = adaptStep(f: f, y: current_y, x: current_x, h: current_h, relativeTol: relativeTol)
-        current_y = rungeKuttaFourthOrder(f: f, y: current_y, x: current_x, h: current_h)
+        current_h = adaptStep(f: f, y: y, x: current_x, h: current_h, relativeTol: relativeTol)
+        y = rungeKuttaFourthOrder(f: f, y: y, x: current_x, h: current_h)
         current_x += current_h
         
     }
         
     current_h = x_f - current_x
-    current_y = rungeKuttaFourthOrder(f: f, y: current_y, x: current_x, h: current_h)
+    y = rungeKuttaFourthOrder(f: f, y: y, x: current_x, h: current_h)
     
 }
 
 
 
 
-public func adaptiveRungeKuttaFourthOrder <T: AdaptiveSteppable> (f: (T, Double) -> T, y: T, x: Double, h: Double, relativeTol: Double) -> T {
+public func adaptiveRungeKuttaFourthOrder <T: AdaptiveSteppable> (f: (T, Double) -> T,
+                                                                  y: T, x: Double,
+                                                                  h: Double,
+                                                                  relativeTol: Double) -> T {
     
     let new_h = adaptStep(f: f, y: y, x: x, h: h, relativeTol: relativeTol)
     let new_y = rungeKuttaFourthOrder(f: f, y: y, x: x, h: new_h)
@@ -111,7 +101,6 @@ public func adaptiveRungeKuttaFourthOrder <T: AdaptiveSteppable> (f: (T, Double)
 
 public func adaptStep <T: AdaptiveSteppable> (f: (T, Double) -> T, y: T, x: Double, h: Double, relativeTol: Double) -> Double {
     
-    
     let hh = h / 2.0
     let dh = h * 2.0
     let min_h = 0.0005
@@ -120,12 +109,10 @@ public func adaptStep <T: AdaptiveSteppable> (f: (T, Double) -> T, y: T, x: Doub
     let new_y_hh = rungeKuttaFourthOrder(f: f, y: y, x: x, h: hh)
     let new_y_dh = rungeKuttaFourthOrder(f: f, y: y, x: x, h: dh)
     
-    
     if h < min_h {
         return min_h
     }
  
-    
   else if new_y_hh.checkEquivalenceUnderRelativeTolerance(new_y_h, relativeTol: relativeTol) == false {
         return adaptStep(f: f, y: y, x: x, h: hh, relativeTol: relativeTol)
     }
@@ -141,32 +128,17 @@ public func adaptStep <T: AdaptiveSteppable> (f: (T, Double) -> T, y: T, x: Doub
     
 }
 
-
-
-
-
-
-
-
 public func rungeKuttaFourthOrder <T: Integrable> (f: (T, Double) -> T, y: T, x: Double, h: Double) -> T {
     
     let K_1 = f(y , x)
-
     let K_2 = f(y + (h * K_1 * 0.5), x + h/2.0)
-    
     let K_3 = f(y + (h * K_2 * 0.5), x + h/2.0)
-    
     let K_4 = f(y + (h * K_3), x + h)
-    
     
     let tot_slope = K_1 + 2.0 * K_2 + 2.0 * K_3 + K_4
     
-    
     let total_change = (h/6)*tot_slope
-    
-    
     let new_y = y + total_change
-    
     
     return new_y
     

@@ -103,13 +103,82 @@ public struct Matrix: VectorType, OperatorType {
         return output
     }
     
-    private func accelerateMatrixMultiplication(_ rhs: Matrix) -> Matrix {
+    public func accelerateMatrixMultiplication(_ rhs: Matrix) -> Matrix {
+        
+        assert(rhs.space == space, "Cannot multipy matrices in different spaces")
         var output = Self(in: self.space)
         
+        let dim = vDSP_Length(space.dimension)
+        
+        let lhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        _ = lhsReal.initialize(from: elements.map{$0.real})
+        
+        let lhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        _ = lhsImag.initialize(from: elements.map{$0.imag})
+        
+        var lhs = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
+        
+        let rhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        _ = rhsReal.initialize(from: rhs.elements.map{$0.real})
+        
+        let rhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        _ = rhsImag.initialize(from: rhs.elements.map{$0.imag})
+        
+        var rhs = DSPDoubleSplitComplex(realp: rhsReal.baseAddress!, imagp: rhsImag.baseAddress!)
+        
+        
+        let outReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        let outImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        
+        var outElem = DSPDoubleSplitComplex(realp: outReal.baseAddress!, imagp: outImag.baseAddress!)
+        
+        vDSP_zmmulD(&lhs, 1, &rhs, 1, &outElem, 1, dim, dim, dim)
+        
+        for i in 0..<space.dimension*space.dimension {
+            
+            output.elements[i] = Complex(real: outElem.realp[i], imag: outElem.imagp[i])
+        }
         
         return output
     }
 
+    public func accelerateVectorMult(_ rhs: Vector) -> Vector {
+        assert(space == rhs.space, "Cannot multiply matrix and vector in different spaces")
+        var output = Vector(in: space)
+        
+        let dim = vDSP_Length(space.dimension)
+        let rhsNumCols = vDSP_Length(1)
+        
+        let lhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        let _ = lhsReal.initialize(from: elements.map{$0.real})
+        
+        let lhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim*dim))
+        _ = lhsImag.initialize(from: elements.map{$0.imag})
+        
+        var lhs = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
+        
+        let rhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim))
+        _ = rhsReal.initialize(from: rhs.elements.map{$0.real})
+        
+        let rhsImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim))
+        _ = rhsImag.initialize(from: rhs.elements.map{$0.imag})
+        
+        var rhs = DSPDoubleSplitComplex(realp: rhsReal.baseAddress!, imagp: rhsImag.baseAddress!)
+        
+        let outReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim))
+        let outImag = UnsafeMutableBufferPointer<Double>.allocate(capacity: Int(dim))
+        
+        var outElem = DSPDoubleSplitComplex(realp: outReal.baseAddress!, imagp: outImag.baseAddress!)
+        
+        vDSP_zmmulD(&lhs, 1, &rhs, 1, &outElem, 1, dim, rhsNumCols, dim)
+        
+        for i in 0..<space.dimension {
+            output.elements[i] = Complex(real: outElem.realp[i], imag: outElem.imagp[i])
+        }
+        
+        return output
+    }
+    
     
     
     public static func * (lhs: Matrix, rhs: Vector) -> Vector {
