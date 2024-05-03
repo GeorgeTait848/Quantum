@@ -761,10 +761,17 @@ final class CoreTests: XCTestCase {
         vector[0] = Complex(5.0)
         vector[1] = Complex(6.0)
         
+        var dsp_vec = DSPComplexVector(fromComplexArray: [Complex(real: 5.0), Complex(real: 6.0)], in: space)
+        
         let res = matrix.accelerateVectorMult(vector)
+        let res_dsp = matrix * dsp_vec
         
         
         XCTAssertTrue(res.elements == [Complex(17.0),Complex(39.0)] )
+        XCTAssertEqual(res_dsp.elements.realp[0], 17.0)
+        XCTAssertEqual(res_dsp.elements.imagp[0], 0.0)
+        XCTAssertEqual(res_dsp.elements.realp[1], 39.0)
+        XCTAssertEqual(res_dsp.elements.imagp[1], 0.0)
     }
     
     func test_DSP_matrix_add() throws {
@@ -778,7 +785,7 @@ final class CoreTests: XCTestCase {
         
         let lhsElem = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
         
-        var lhs = DSPComplexMatrix(elements: lhsElem, in: space)
+        let lhs = DSPComplexMatrix(elements: lhsElem, in: space)
         
         let rhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
         _ = rhsReal.initialize(from: [1,2,3,4])
@@ -788,7 +795,7 @@ final class CoreTests: XCTestCase {
         
         let rhsElem = DSPDoubleSplitComplex(realp: rhsReal.baseAddress!, imagp: rhsImag.baseAddress!)
         
-        var rhs = DSPComplexMatrix(elements: rhsElem, in: space)
+        let rhs = DSPComplexMatrix(elements: rhsElem, in: space)
         
         let res = lhs + rhs
         
@@ -812,7 +819,7 @@ final class CoreTests: XCTestCase {
         
         let lhsElem = DSPDoubleSplitComplex(realp: lhsReal.baseAddress!, imagp: lhsImag.baseAddress!)
         
-        var lhs = DSPComplexMatrix(elements: lhsElem, in: space)
+        let lhs = DSPComplexMatrix(elements: lhsElem, in: space)
         
         let rhsReal = UnsafeMutableBufferPointer<Double>.allocate(capacity: space.dimension*space.dimension)
         _ = rhsReal.initialize(from: [1,2,3,4])
@@ -822,7 +829,7 @@ final class CoreTests: XCTestCase {
         
         let rhsElem = DSPDoubleSplitComplex(realp: rhsReal.baseAddress!, imagp: rhsImag.baseAddress!)
         
-        var rhs = DSPComplexMatrix(elements: rhsElem, in: space)
+        let rhs = DSPComplexMatrix(elements: rhsElem, in: space)
         
         let res = lhs - rhs
         
@@ -831,6 +838,163 @@ final class CoreTests: XCTestCase {
             XCTAssertEqual(res.elements.imagp[i], 0.0)
         }
     }
+    
+    
+    func test_DSPComplexVector_basics() throws {
+        let i = C( real: 0.0, imag: 1.0 )
+        
+        let space1 = VectorSpace(dimension: 2, label: "test space 1")
+        
+        let u1_elem = [ 3.0 + 2.0 * i , -1.0 + 4.0 * i ]
+        let v1_elem = [ -3.0 - 2.0 * i , 1.0 - 4.0 * i ]
+        
+        var u1 = DSPComplexVector(fromComplexArray: u1_elem, in: space1)
+        var v1 = DSPComplexVector(fromComplexArray: v1_elem, in: space1)
+        let zero1 = DSPComplexVector(fromComplexArray: [ C(real: 0), C(real: 0) ], in: space1)
+        
+        let space2 = VectorSpace(dimension: 2, label: "test space 2")
+        let u2 = DSPComplexVector(fromComplexArray: [ 3.0 + 2.0 * i , -1.0 + 4.0 * i ], in: space2)
+        
+        XCTAssertEqual(u1 + v1, zero1)
+        XCTAssertTrue( u1.space == v1.space )
+        XCTAssertFalse( u1.space == u2.space )
+        XCTAssertEqual( (u1 + v1)[1] , zero1[1] )
+        XCTAssertNotEqual( u1[1] , v1[1])
+        XCTAssertEqual( -1*u1 , v1 )
+        XCTAssertNotEqual( -1*u1 , -1*v1 )
+
+        XCTAssertEqual( u1 - v1 , u1 + u1 )
+        XCTAssertEqual( u1 - u1 , zero1 )
+        XCTAssertNotEqual( u1 - v1 , u1 - u1 )
+        
+        XCTAssertEqual( sum(u1,v1) , zero1 )
+        XCTAssertEqual( sum(u1,v1,u1) , u1 )
+        
+        
+    }
+    
+    
+    func test_DSP_matrix_div_scalar_complex () throws {
+        
+        let space = VectorSpace(dimension: 2, label: "DSPComplexMatrix times scalar test space")
+        
+        
+        let input_elem = [Complex(real: 1), Complex(real: 1, imag: 1), Complex(real: 2, imag: -1), Complex(real: 3, imag: 2)]
+        
+        let correct_out_elem = [Complex(real: 0.5, imag: -0.5), Complex(real: 1), Complex(real: 0.5, imag: -1.5), Complex(real: 2.5, imag: -0.5)]
+        
+        var matrix_dsp = DSPComplexMatrix(fromComplexArray: input_elem, in: space)
+        
+        let out = matrix_dsp / Complex(real: 1, imag: 1)
+        
+        for i in 0..<space.dimension*space.dimension {
+            print("\(out.elements.realp[i]) + \(out.elements.imagp[i]) i ")
+            XCTAssertEqual(out.elements.realp[i], correct_out_elem[i].real)
+            XCTAssertEqual(out.elements.imagp[i], correct_out_elem[i].imag)
+        }
+        
+        
+    }
+    
+    func test_DSP_matrix_div_scalar_real () throws {
+        
+        let space = VectorSpace(dimension: 2, label: "DSPComplexMatrix times scalar test space")
+        
+        
+        let input_elem = [Complex(real: 1), Complex(real: 1, imag: 1), Complex(real: 2, imag: -1), Complex(real: 3, imag: 2)]
+        
+        let correct_out_elem = [Complex(real: 0.5), Complex(real: 0.5, imag: 0.5), Complex(real: 1, imag: -0.5), Complex(real: 1.5, imag: 1)]
+        
+        var matrix_dsp = DSPComplexMatrix(fromComplexArray: input_elem, in: space)
+        
+        let out = matrix_dsp / 2.0
+        
+        for i in 0..<space.dimension*space.dimension {
+            print("\(out.elements.realp[i]) + \(out.elements.imagp[i]) i ")
+            XCTAssertEqual(out.elements.realp[i], correct_out_elem[i].real)
+            XCTAssertEqual(out.elements.imagp[i], correct_out_elem[i].imag)
+        }
+        
+        
+    }
+    
+    func test_DSP_matrix_mult_scalar_real () throws {
+        
+        let space = VectorSpace(dimension: 2, label: "DSPComplexMatrix times scalar test space")
+        
+        
+        let input_elem = [Complex(real: 1), Complex(real: 1, imag: 1), Complex(real: 2, imag: -1), Complex(real: 3, imag: 2)]
+        
+        let correct_out_elem = [Complex(real: 2.0), Complex(real: 2.0, imag: 2.0), Complex(real: 4, imag: -2), Complex(real: 6, imag: 4)]
+        
+        var matrix_dsp = DSPComplexMatrix(fromComplexArray: input_elem, in: space)
+        
+        let out = matrix_dsp * 2.0
+        
+        for i in 0..<space.dimension*space.dimension {
+            print("\(out.elements.realp[i]) + \(out.elements.imagp[i]) i ")
+            XCTAssertEqual(out.elements.realp[i], correct_out_elem[i].real)
+            XCTAssertEqual(out.elements.imagp[i], correct_out_elem[i].imag)
+        }
+        
+        
+    }
+    
+    func test_DSP_matrix_mult_scalar_complex () throws {
+        
+        let space = VectorSpace(dimension: 2, label: "DSPComplexMatrix times scalar test space")
+        
+        
+        let input_elem = [Complex(real: 1), Complex(real: 1, imag: 1), Complex(real: 2, imag: -1), Complex(real: 3, imag: 2)]
+        
+        let correct_out_elem = [Complex(real: 1.0, imag: -2), Complex(real: 3.0, imag: -1), Complex(real: 0, imag: -5), Complex(real: 7, imag: -4)]
+        
+        var matrix_dsp = DSPComplexMatrix(fromComplexArray: input_elem, in: space)
+        
+        let out = matrix_dsp * Complex(real: 1, imag: -2)
+        
+        for i in 0..<space.dimension*space.dimension {
+            print("\(out.elements.realp[i]) + \(out.elements.imagp[i]) i ")
+            XCTAssertEqual(out.elements.realp[i], correct_out_elem[i].real)
+            XCTAssertEqual(out.elements.imagp[i], correct_out_elem[i].imag)
+        }
+        
+        
+    }
+    
+    func test_DSP_vector_div_scalar_complex () throws {
+        
+        /*
+         The only issue that would arise here, given the matrix times scalar tests pass is indexing.
+         If this test, passes, due to nature of algorithm, dont need to test variants.
+        */
+        
+        let space = VectorSpace(dimension: 4, label: "DSPComplexMatrix times scalar test space")
+        
+        let input_elem = [Complex(real: 1), Complex(real: 1, imag: 1), Complex(real: 2, imag: -1), Complex(real: 3, imag: 2)]
+        
+        let correct_out_elem = [Complex(real: 0.5, imag: -0.5),
+                                Complex(real: 1),
+                                Complex(real: 0.5, imag: -1.5),
+                                Complex(real: 2.5, imag: -0.5)]
+        
+        var vector_dsp = DSPComplexVector(fromComplexArray: input_elem, in: space)
+        
+        let out = vector_dsp / Complex(real: 1, imag: 1)
+        
+        for i in 0..<space.dimension {
+            print("\(out.elements.realp[i]) + \(out.elements.imagp[i]) i ")
+            XCTAssertEqual(out.elements.realp[i], correct_out_elem[i].real)
+            XCTAssertEqual(out.elements.imagp[i], correct_out_elem[i].imag)
+        }
+        
+        
+    }
+    
+    
+    
+    
+    
     
 }
 
